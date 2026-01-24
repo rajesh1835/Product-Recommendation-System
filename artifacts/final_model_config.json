@@ -1,0 +1,13 @@
+{
+    "best_model": "KNNBasic",
+    "best_params": {
+        "k": 20,
+        "min_k": 1,
+        "sim_options": {
+            "name": "cosine",
+            "user_based": false
+        }
+    },
+    "gs_rmse": 0.7279665632345469,
+    "gs_mae": 0.3704206610736424
+}

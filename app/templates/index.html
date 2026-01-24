@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Product Recommender{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Discover Products You'll Love</h1>
+        <p>AI-powered recommendations tailored just for you</p>
+        <form class="hero-search" action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Search for laptops, headphones, cameras...">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+</section>
+
+<!-- KPI Cards -->
+<section class="kpi-section">
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <div class="kpi-icon">📦</div>
+            <div class="kpi-value">{{ "{:,}".format(kpi.total_products) }}</div>
+            <div class="kpi-label">Total Products</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">🏷️</div>
+            <div class="kpi-value">{{ kpi.total_categories }}</div>
+            <div class="kpi-label">Categories</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">⭐</div>
+            <div class="kpi-value">{{ kpi.avg_rating }}</div>
+            <div class="kpi-label">Avg Rating</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-value">₹{{ "{:,.0f}".format(kpi.avg_price|clean_price) }}</div>
+            <div class="kpi-label">Avg Price</div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Products -->
+<section class="products-section">
+    <div class="section-header">
+        <h2>🔥 Popular Products</h2>
+        <a href="{{ url_for('search') }}" class="view-all">View All →</a>
+    </div>
+
+    <div class="products-grid">
+        {% for product in popular %}
+        <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
+            <div class="product-image">
+                {% if product.image %}
+                <img src="{{ product.image }}" alt="{{ product.name }}"
+                    onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                {% else %}
+                <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</h3>
+                <p class="product-category">{{ product.main_category }}</p>
+                <div class="product-meta" style="flex-direction: column; align-items: flex-start;">
+                    <span class="product-rating" style="margin-bottom: 5px;">⭐ {{ product.ratings }}</span>
+                    <div class="price-box">
+                        <span class="product-price" style="font-size: 1.1rem; color: var(--accent);">₹{{
+                            "{:,.0f}".format(product.discount_price|clean_price) }}</span>
+                        {% set pct = product|discount_pct %}
+                        {% if pct > 0 %}
+                        <span class="original-price"
+                            style="text-decoration: line-through; color: var(--text-secondary); font-size: 0.85rem; margin-left: 5px;">₹{{
+                            "{:,.0f}".format(product.actual_price|clean_price) }}</span>
+                        <span class="discount-badge"
+                            style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px;">{{
+                            pct }}% OFF</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <h2>Why Choose Us?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3>AI-Powered</h3>
+            <p>Smart recommendations using machine learning algorithms</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Personalized</h3>
+            <p>Tailored suggestions based on your preferences</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Fast & Easy</h3>
+            <p>Find what you need in seconds</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,6 @@
+Stage,Rows,Columns,Memory (MB),Missing %,Description
+Raw Amazon Products Data,"551,585",10,463.14,7.8%,Original Amazon product dataset
+Raw Reviews Data,263,-,-,-,Unstructured reviews text file
+Combined Dataset,"551,585",13,611.11,6.0%,Amazon data + synthetic UserId/ProductId
+Cleaned Dataset,"539,626",12,469.49,0.0%,After datatype correction and missing-value handling
+Sampled Dataset,"25,000",12,21.55,0.0%,Random 25k sample for scalable analysis

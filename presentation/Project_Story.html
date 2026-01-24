@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Story - From Problem to Solution</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Container */
+        .story-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        /* Timeline Line */
+        .story-container::before {
+            content: '';
+            position: absolute;
+            left: 50px;
+            top: 150px;
+            bottom: 100px;
+            width: 4px;
+            background: #334155;
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            .story-container::before {
+                left: 30px;
+            }
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 80px;
+            padding: 40px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        /* Story Cards */
+        .story-card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 60px;
+            margin-left: 60px;
+            /* Space for timeline */
+            position: relative;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid #334155;
+            transition: transform 0.3s ease;
+        }
+
+        .story-card:hover {
+            transform: translateY(-5px);
+            border-color: #6366f1;
+        }
+
+        /* Timeline Dot */
+        .story-card::before {
+            content: '';
+            position: absolute;
+            left: -64px;
+            /* Adjust to align with timeline line */
+            top: 40px;
+            width: 20px;
+            height: 20px;
+            background: #6366f1;
+            border: 4px solid #0f172a;
+            border-radius: 50%;
+            z-index: 1;
+            box-shadow: 0 0 0 4px #6366f1;
+        }
+
+        /* Card Content */
+        h2 {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon {
+            font-size: 2rem;
+        }
+
+        .highlight {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        .problem-text {
+            color: #f87171;
+        }
+
+        .solution-text {
+            color: #4ade80;
+        }
+
+        .concept-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #c084fc;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Visual Diagrams inside cards */
+        .diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .diagram-box {
+            background: #334155;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .arrow {
+            color: #6366f1;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="story-container">
+
+        <header class="header-section">
+            <h1>The Project Story</h1>
+            <p class="subtitle">From "Chaos" to "Personalization"</p>
+        </header>
+
+        <!-- CHAPTER 1: THE PROBLEM -->
+        <article class="story-card">
+            <h2><span class="icon">🛑</span> Chapter 1: The Problem</h2>
+            <p>Imagine walking into a supermarket with 1 million items, no aisles, and no signs. You would be
+                overwhelmed.</p>
+
+            <div class="concept-box">
+                <p><strong>The Issue:</strong> <span class="problem-text">Choice Overload</span>. In e-commerce, users
+                    drown in millions of products.</p>
+                <p><strong>The Consequence:</strong> Users get frustrated and leave. Sales drop.</p>
+            </div>
+        </article>
+
+        <!-- CHAPTER 2: THE GOAL -->
+        <article class="story-card">
+            <h2><span class="icon">🎯</span> Chapter 2: The Goal</h2>
+            <p>We built a <strong>Personalized Filter</strong> using Machine Learning.</p>
+            <p>If User A likes <span class="highlight">iPhone</span> & <span class="highlight">AirPods</span>, and User
+                B likes <span class="highlight">iPhone</span>, our system predicts User B implies they want AirPods too.
+            </p>
+        </article>
+
+        <!-- CHAPTER 3: THE PIPELINE -->
+        <article class="story-card">
+            <h2><span class="icon">🏭</span> Chapter 3: The Data Factory</h2>
+            <p>Our raw data was messy: mixed currencies ("₹499"), missing IDs, and text reviews. Machine Learning needs
+                clean numbers.</p>
+
+            <p>We built a 4-step pipeline:</p>
+            <div class="diagram">
+                <div class="diagram-box">📥 Loader</div>
+                <span class="arrow">→</span>
+                <div class="diagram-box">🔗 Combiner<br><small>(Add IDs)</small></div>
+                <span class="arrow">→</span>
+                <div class="diagram-box">🧹 Cleaner<br><small>(Fix Prices)</small></div>
+                <span class="arrow">→</span>
+                <div class="diagram-box">📊 Sampler<br><small>(25k rows)</small></div>
+            </div>
+        </article>
+
+        <!-- CHAPTER 4: THE MODEL TOURNAMENT -->
+        <article class="story-card">
+            <h2><span class="icon">🏆</span> Chapter 4: The Algorithm Tournament</h2>
+            <p>We didn't just guess. We tested 4 contenders to see who could predict ratings best.</p>
+
+            <div class="concept-box">
+                <p><strong>The Winner:</strong> <span class="solution-text">KNNWithMeans</span></p>
+                <p><strong>Why?</strong> It understands <strong>Human Bias</strong>.</p>
+                <p><em>Example:</em> A "Grumpy" user's 3-stars might mean the same as a "Happy" user's 5-stars. This
+                    model adjusts for that personality difference.</p>
+            </div>
+        </article>
+
+        <!-- CHAPTER 5: THE SOLUTION -->
+        <article class="story-card">
+            <h2><span class="icon">🚀</span> Chapter 5: The Final Engine</h2>
+            <p>We deployed a <strong>Hybrid System</strong> to solve the "Cold Start" problem.</p>
+
+            <div class="diagram" style="justify-content: start; gap: 20px;">
+                <div class="diagram-box" style="border: 1px solid #4ade80;">
+                    <strong>Plan A:</strong><br>Product has ratings?<br>
+                    <span class="solution-text">Use KNN Model</span>
+                </div>
+                <div class="diagram-box" style="border: 1px solid #f87171;">
+                    <strong>Plan B:</strong><br>New Product?<br>
+                    <span class="problem-text">Use Text Analysis (TF-IDF)</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 20px;">This ensures <strong>every product</strong> gets recommendations, no matter how
+                new it is.</p>
+        </article>
+
+    </div>
+
+</body>
+
+</html>

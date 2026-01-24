@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Walkthrough - Product Recommendation System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 60px 0;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border-bottom: 4px solid #6366f1;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        /* Sections */
+        .section-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            border-left: 6px solid #6366f1;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            border-left-color: #22d3ee;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .badge {
+            background: #6366f1;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 1rem;
+            vertical-align: middle;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            color: #cbd5e1;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: #a5b4fc;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .comment {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .keyword {
+            color: #c084fc;
+            font-weight: bold;
+        }
+
+        .function {
+            color: #22d3ee;
+        }
+
+        .string {
+            color: #86efac;
+        }
+
+        /* Flow Indicators */
+        .flow-step {
+            display: flex;
+            align-items: start;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+
+        .step-num {
+            background: #334155;
+            color: #fff;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: #334155;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #6366f1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Code Walkthrough Guide</h1>
+        <p class="subtitle">E-Commerce Product Recommendation System</p>
+    </header>
+
+    <div class="container">
+
+        <div class="nav-buttons">
+            <a href="#entry" class="nav-btn">1. Entry Point</a>
+            <a href="#processing" class="nav-btn">2. Data Processing</a>
+            <a href="#eda" class="nav-btn">3. Analysis (EDA)</a>
+            <a href="#models" class="nav-btn">4. ML Models</a>
+            <a href="#inference" class="nav-btn">5. Inference</a>
+        </div>
+
+        <!-- SECTION 1: MAIN.PY -->
+        <div id="entry" class="section-card">
+            <h2><span class="badge">Step 1</span> The Conductor: main.py</h2>
+            <p>This is the entry point. Think of it as the "manager" that calls all other departments to do their work.
+            </p>
+
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div>
+                    <strong>Orchestration:</strong> It runs the pipeline sequentially: Load → Combine → Clean → Sample →
+                    Train.
+                </div>
+            </div>
+
+            <div class="code-block">
+                <span class="keyword">def</span> <span class="function">main</span>():
+                <span class="comment"># 1. Load Data</span>
+                loader = DataLoader()
+                amazon_df = loader.load_amazon_data()
+
+                <span class="comment"># 2. Combine & Clean</span>
+                combiner = DataCombiner(amazon_df, reviews)
+                cleaner = DataCleaner(combined_df)
+
+                <span class="comment"># ... (Data passes through pipeline) ...</span>
+
+                <span class="comment"># 3. Train Models</span>
+                rmse, mae = run_knn_with_means()
+            </div>
+        </div>
+
+        <!-- SECTION 2: DATA PROCESSING -->
+        <div id="processing" class="section-card">
+            <h2><span class="badge">Step 2</span> The Kitchen: Data Processing</h2>
+            <p>Before we can cook (model), we must prep the ingredients (data). This happens in
+                <code>src/components/</code>.</p>
+
+            <div class="flow-step">
+                <div class="step-num">A</div>
+                <div>
+                    <strong>Data Combiner:</strong> The raw data lacked IDs. We generate synthetic <code>UserId</code>
+                    and assign reviews manually to create a proper schema.
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-num">B</div>
+                <div>
+                    <strong>Data Cleaner:</strong> Critical cleanup logic.
+                    <br>• Fills missing ratings with <em>median</em>.
+                    <br>• Removes impossible prices (Discount > Actual).
+                    <br>• Converts string prices ("₹499") to floats (499.0).
+                </div>
+            </div>
+
+            <div class="code-block">
+                <span class="keyword">class</span> <span class="function">DataCleaner</span>:
+                <span class="keyword">def</span> <span class="function">handle_missing_values</span>(self):
+                <span class="comment"># Use median to avoid outliers affecting the fill value</span>
+                self.df[<span class="string">"ratings"</span>] = self.df[<span
+                    class="string">"ratings"</span>].fillna(self.df[<span class="string">"ratings"</span>].median())
+            </div>
+        </div>
+
+        <!-- SECTION 3: EDA -->
+        <div id="eda" class="section-card">
+            <h2><span class="badge">Step 3</span> The Report: Analysis (EDA)</h2>
+            <p>Located in <code>src/components/eda.py</code>. This module tells the story of our data visually.</p>
+
+            <div class="flow-step">
+                <div class="step-num">📊</div>
+                <div>
+                    <strong>Automated Insights:</strong> Instead of manual plotting, calling <code>eda.run_all()</code>
+                    generates 8 standard charts (Price Dist, Heatmaps, etc.) automatically.
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: MODELS -->
+        <div id="models" class="section-card">
+            <h2><span class="badge">Step 4</span> The Brain: ML Models</h2>
+            <p>We implemented 4 models in <code>src/models/</code> to find the best performer.</p>
+
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div>
+                    <strong>KNNBasic:</strong> Classic "Users who liked this, also liked that". Uses Cosine Similarity.
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <div class="step-num">2</div>
+                <div>
+                    <strong>KNNWithMeans (Winner 🏆):</strong>
+                    <br>Why did it win? It accounts for <strong>User Bias</strong>.
+                    <br><em>Scenario:</em> User A always rates 5 stars. User B always rates 1 star.
+                    <br><em>Result:</em> KNNWithMeans subtracts the user's average rating to normalize these tendencies.
+                </div>
+            </div>
+
+            <div class="code-block">
+                <span class="keyword">def</span> <span class="function">run_knn_with_means</span>():
+                sim_options = {
+                <span class="string">"name"</span>: <span class="string">"cosine"</span>,
+                <span class="string">"user_based"</span>: <span class="keyword">False</span> <span class="comment">#
+                    Item-Based CF proved better</span>
+                }
+                model = KNNWithMeans(sim_options=sim_options)
+                model.fit(trainset)
+            </div>
+        </div>
+
+        <!-- SECTION 5: INFERENCE -->
+        <div id="inference" class="section-card">
+            <h2><span class="badge">Step 5</span> The Application: Inference</h2>
+            <p>Located in <code>src/inference/search_recommendation.py</code>. This is how the real world interacts with
+                the model.</p>
+
+            <div class="flow-step">
+                <div class="step-num">🔍</div>
+                <div>
+                    <strong>The Cold Start Problem:</strong> What if a new product has no ratings?
+                    <br><strong>Solution:</strong> We built a <strong>Hybrid System</strong>.
+                    <br>1. Try <strong>KNN</strong> (Collaborative Filtering).
+                    <br>2. If no results, Fallback to <strong>TF-IDF</strong> (Content-Based) using product
+                    names/categories.
+                </div>
+            </div>
+
+            <div class="code-block">
+                <span class="keyword">def</span> <span class="function">hybrid_recommend</span>(product_id):
+                knn_recs = knn_recommend(product_id)
+
+                <span class="keyword">if</span> len(knn_recs) >= 3:
+                <span class="keyword">return</span> knn_recs <span class="comment"># High confidence</span>
+
+                <span class="keyword">return</span> tfidf_recommend(product_id) <span class="comment"># Fallback to Text
+                    matching</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

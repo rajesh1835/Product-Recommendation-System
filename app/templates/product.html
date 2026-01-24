@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name[:50] }} - Product Recommender{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <!-- Product Detail -->
+    <section class="product-detail">
+        <div class="product-detail-image">
+            {% if product.image %}
+            <img src="{{ product.image }}" alt="{{ product.name }}"
+                onerror="this.src='https://via.placeholder.com/400x400?text=No+Image'">
+            {% else %}
+            <img src="https://via.placeholder.com/400x400?text=No+Image" alt="No image">
+            {% endif %}
+        </div>
+
+        <div class="product-detail-info">
+            <span class="product-category-badge">{{ product.main_category }}</span>
+            <h1>{{ product.name }}</h1>
+
+            <div class="product-rating-large">
+                <span class="stars">⭐ {{ product.ratings }}</span>
+                <span class="reviews">({{ "{:,}".format(product.no_of_ratings|int) }} ratings)</span>
+            </div>
+
+            <div class="product-price-section">
+                <span class="current-price">₹{{ "{:,.0f}".format(product.discount_price|clean_price) }}</span>
+                {% set pct = product|discount_pct %}
+                {% if pct > 0 %}
+                <span class="original-price"
+                    style="text-decoration: line-through; color: var(--text-secondary); font-size: 1.25rem; margin-left: 10px;">₹{{
+                    "{:,.0f}".format(product.actual_price|clean_price) }}</span>
+                <span class="discount-badge"
+                    style="background: #10b981; color: white; padding: 4px 8px; border-radius: 6px; font-size: 1rem; margin-left: 10px;">{{
+                    pct }}% OFF</span>
+                {% endif %}
+            </div>
+
+            <div class="product-actions">
+                <button class="btn-primary btn-large">Add to Cart 🛒</button>
+                <button class="btn-outline btn-large">Add to Wishlist ❤️</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Similar Products -->
+    {% if similar %}
+    <section class="recommendations-section">
+        <div class="section-header">
+            <h2>🔄 Similar Products</h2>
+            <p>Products similar to this one</p>
+        </div>
+
+        <div class="products-grid">
+            {% for product in similar %}
+            <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}"
+                        onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                    {% else %}
+                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">{{ product.name[:40] }}...</h3>
+                    <p class="product-category">{{ product.main_category }}</p>
+                    <div class="product-meta" style="flex-direction: column; align-items: flex-start;">
+                        <span class="product-rating" style="margin-bottom: 5px;">⭐ {{ product.ratings }}</span>
+                        <div class="price-box">
+                            <span class="product-price" style="font-size: 1.1rem; color: var(--accent);">₹{{
+                                "{:,.0f}".format(product.discount_price|clean_price) }}</span>
+                            {% set pct = product|discount_pct %}
+                            {% if pct > 0 %}
+                            <span class="original-price"
+                                style="text-decoration: line-through; color: var(--text-secondary); font-size: 0.85rem; margin-left: 5px;">₹{{
+                                "{:,.0f}".format(product.actual_price|clean_price) }}</span>
+                            <span class="discount-badge"
+                                style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px;">{{
+                                pct }}% OFF</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if product.similarity_score %}
+                    <div class="similarity-score">{{ (product.similarity_score * 100)|int }}% match</div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Related Products -->
+    {% if related %}
+    <section class="recommendations-section">
+        <div class="section-header">
+            <h2>🔗 Related Products</h2>
+            <p>More from {{ product.main_category }}</p>
+        </div>
+
+        <div class="products-grid">
+            {% for product in related %}
+            <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}"
+                        onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                    {% else %}
+                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">{{ product.name[:40] }}...</h3>
+                    <p class="product-category">{{ product.main_category }}</p>
+                    <div class="product-meta" style="flex-direction: column; align-items: flex-start;">
+                        <span class="product-rating" style="margin-bottom: 5px;">⭐ {{ product.ratings }}</span>
+                        <div class="price-box">
+                            <span class="product-price" style="font-size: 1.1rem; color: var(--accent);">₹{{
+                                "{:,.0f}".format(product.discount_price|clean_price) }}</span>
+                            {% set pct = product|discount_pct %}
+                            {% if pct > 0 %}
+                            <span class="original-price"
+                                style="text-decoration: line-through; color: var(--text-secondary); font-size: 0.85rem; margin-left: 5px;">₹{{
+                                "{:,.0f}".format(product.actual_price|clean_price) }}</span>
+                            <span class="discount-badge"
+                                style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px;">{{
+                                pct }}% OFF</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

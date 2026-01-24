@@ -1,0 +1,55 @@
+# ========================================
+# Product Recommendation System - .gitignore
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model Files (too large)
+artifacts/*.pkl
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+app/instance/
+
+# Environment
+.env
+*.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# DATA FOLDER (excluded - too large for GitHub)
+data/
+
+# NOTEBOOKS FOLDER
+notebooks/
