@@ -190,19 +190,12 @@ def search():
 def product_detail(product_id):
     rec = get_recommender()
     
-    # Get product details from database
-    cursor = rec.conn.execute("""
-        SELECT product_id as ProductId, name, main_category, sub_category,
-               ratings, no_of_ratings, discount_price, actual_price, image, link
-        FROM products WHERE product_id = ?
-    """, (product_id,))
-    row = cursor.fetchone()
+    # Get product details from CSV (via recommender)
+    product = rec.get_product_by_id(product_id)
     
-    if not row:
+    if not product:
         flash('Product not found', 'error')
         return redirect(url_for('index'))
-    
-    product = dict(row)
     
     # Get recommendations
     similar = rec.get_similar_products(product_id, top_n=6)

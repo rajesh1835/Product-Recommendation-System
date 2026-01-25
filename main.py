@@ -104,6 +104,16 @@ def main():
     )
 
     # -------------------------------------------------
+    # EXPORT: Save Cleaned Data
+    # -------------------------------------------------
+    export_path = "data/processed/amazon_products_with_reviews.csv"
+    os.makedirs(os.path.dirname(export_path), exist_ok=True)
+    
+    print(f"[EXPORT] Saving cleaned dataset to {export_path}...")
+    cleaned_df.to_csv(export_path, index=False)
+    print("✔ Export completed\n")
+
+    # -------------------------------------------------
     # STEP 4: Sampling
     # -------------------------------------------------
     print("[STEP 4] Sampling dataset to 25,000 rows...\n")
