@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - Product Recommender{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="search-header">
+        <h1>Search Results</h1>
+        {% if query %}
+        <p>Showing results for "<strong>{{ query }}</strong>"</p>
+        {% else %}
+        <p>Enter a search term to find products</p>
+        {% endif %}
+    </div>
+
+    <!-- Search Form -->
+    <form class="search-form" action="{{ url_for('search') }}" method="GET">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search products...">
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Results -->
+    {% if results %}
+    <div class="results-count">
+        Found {{ results|length }} product(s)
+    </div>
+
+    <div class="products-grid">
+        {% for product in results %}
+        <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
+            <div class="product-image">
+                {% if product.image %}
+                <img src="{{ product.image }}" alt="{{ product.name }}"
+                    onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                {% else %}
+                <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</h3>
+                <p class="product-category">{{ product.main_category }}</p>
+                <div class="product-meta" style="flex-direction: column; align-items: flex-start;">
+                    <span class="product-rating" style="margin-bottom: 5px;">⭐ {{ product.ratings }}</span>
+                    <div class="price-box">
+                        <span class="product-price" style="font-size: 1.1rem; color: var(--accent);">₹{{
+                            "{:,.0f}".format(product.discount_price|clean_price) }}</span>
+                        {% set pct = product|discount_pct %}
+                        {% if pct > 0 %}
+                        <span class="original-price"
+                            style="text-decoration: line-through; color: var(--text-secondary); font-size: 0.85rem; margin-left: 5px;">₹{{
+                            "{:,.0f}".format(product.actual_price|clean_price) }}</span>
+                        <span class="discount-badge"
+                            style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px;">{{
+                            pct }}% OFF</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% elif query %}
+    <div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <h2>No products found</h2>
+        <p>Try a different search term</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

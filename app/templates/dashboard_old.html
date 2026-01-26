@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Product Recommender{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="dashboard-header">
+        <h1>Welcome to Dashboard! 👋</h1>
+        <p>Here's your personalized dashboard</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <section class="kpi-section">
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-icon">📦</div>
+                <div class="kpi-value">{{ "{:,}".format(kpi.total_products) }}</div>
+                <div class="kpi-label">Total Products</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">🏷️</div>
+                <div class="kpi-value">{{ kpi.total_categories }}</div>
+                <div class="kpi-label">Categories</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">⭐</div>
+                <div class="kpi-value">{{ kpi.avg_rating }}</div>
+                <div class="kpi-label">Avg Rating</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon">💰</div>
+                <div class="kpi-value">₹{{ "{:,.0f}".format(kpi.avg_price|float) }}</div>
+                <div class="kpi-label">Avg Price</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+        <div class="charts-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+            <div class="chart-card"
+                style="background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border);">
+                <h3>Top Categories</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="chart-card"
+                style="background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border);">
+                <h3>Rating Distribution</h3>
+                <canvas id="ratingChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Search -->
+    <section class="quick-search-section">
+        <h2>🔍 Quick Search</h2>
+        <form class="hero-search" action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Search for products...">
+            <button type="submit">Search</button>
+        </form>
+    </section>
+
+    <!-- Recommended for You -->
+    <section class="products-section">
+        <div class="section-header">
+            <h2>🎯 Recommended for You</h2>
+        </div>
+
+        <div class="products-grid">
+            {% for product in popular %}
+            <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}"
+                        onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                    {% else %}
+                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</h3>
+                    <p class="product-category">{{ product.main_category }}</p>
+                    <div class="product-meta">
+                        <span class="product-rating">⭐ {{ product.ratings }}</span>
+                        <span class="product-price">₹{{ "{:,.0f}".format(product.actual_price|float) }}</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -27,13 +27,11 @@
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
                     🌙
                 </button>
-
-                {% if current_user.is_authenticated %}
                 <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('logout') }}" class="nav-link btn-outline">Logout</a>
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('logout') }}" class="nav-link" style="color: #ff6b6b;">Logout ({{ session.get('username') }})</a>
                 {% else %}
-                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
-                <a href="{{ url_for('signup') }}" class="nav-link btn-primary">Sign Up</a>
+                <a href="{{ url_for('login') }}" class="nav-link" style="background: #3498db; color: white; padding: 0.5rem 1rem; border-radius: 4px;">Sign In / Sign Up</a>
                 {% endif %}
             </div>
         </div>

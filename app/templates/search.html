@@ -1,70 +1,535 @@
 {% extends 'base.html' %}
 
-{% block title %}Search Results - Product Recommender{% endblock %}
+{% block title %}Search - Product Recommender{% endblock %}
 
 {% block content %}
 <div class="search-container">
-    <div class="search-header">
-        <h1>Search Results</h1>
-        {% if query %}
-        <p>Showing results for "<strong>{{ query }}</strong>"</p>
-        {% else %}
-        <p>Enter a search term to find products</p>
-        {% endif %}
-    </div>
-
-    <!-- Search Form -->
-    <form class="search-form" action="{{ url_for('search') }}" method="GET">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search products...">
-        <button type="submit">Search</button>
-    </form>
-
-    <!-- Results -->
-    {% if results %}
-    <div class="results-count">
-        Found {{ results|length }} product(s)
-    </div>
-
-    <div class="products-grid">
-        {% for product in results %}
-        <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
-            <div class="product-image">
-                {% if product.image %}
-                <img src="{{ product.image }}" alt="{{ product.name }}"
-                    onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
-                {% else %}
-                <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
-                {% endif %}
-            </div>
-            <div class="product-info">
-                <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</h3>
-                <p class="product-category">{{ product.main_category }}</p>
-                <div class="product-meta" style="flex-direction: column; align-items: flex-start;">
-                    <span class="product-rating" style="margin-bottom: 5px;">⭐ {{ product.ratings }}</span>
-                    <div class="price-box">
-                        <span class="product-price" style="font-size: 1.1rem; color: var(--accent);">₹{{
-                            "{:,.0f}".format(product.discount_price|clean_price) }}</span>
-                        {% set pct = product|discount_pct %}
-                        {% if pct > 0 %}
-                        <span class="original-price"
-                            style="text-decoration: line-through; color: var(--text-secondary); font-size: 0.85rem; margin-left: 5px;">₹{{
-                            "{:,.0f}".format(product.actual_price|clean_price) }}</span>
-                        <span class="discount-badge"
-                            style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px;">{{
-                            pct }}% OFF</span>
-                        {% endif %}
+    <div class="search-layout">
+        <!-- Filters Sidebar -->
+        <aside class="filters-sidebar">
+            <h3>🔍 Filters</h3>
+            
+            <form id="filterForm" action="{{ url_for('search') }}" method="GET" class="filter-form">
+                <!-- Price Range Filter -->
+                <div class="filter-group">
+                    <label>Price Range (₹)</label>
+                    <div class="price-range">
+                        <input type="number" name="min_price" placeholder="Min" value="{{ request.args.get('min_price', '') }}" class="filter-input">
+                        <span>to</span>
+                        <input type="number" name="max_price" placeholder="Max" value="{{ request.args.get('max_price', '') }}" class="filter-input">
                     </div>
                 </div>
+
+                <!-- Rating Filter -->
+                <div class="filter-group">
+                    <label>Minimum Rating</label>
+                    <select name="min_rating" class="filter-select">
+                        <option value="">All Ratings</option>
+                        <option value="4.5" {% if request.args.get('min_rating') == '4.5' %}selected{% endif %}>⭐⭐⭐⭐⭐ (4.5+)</option>
+                        <option value="4" {% if request.args.get('min_rating') == '4' %}selected{% endif %}>⭐⭐⭐⭐ (4.0+)</option>
+                        <option value="3" {% if request.args.get('min_rating') == '3' %}selected{% endif %}>⭐⭐⭐ (3.0+)</option>
+                    </select>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="filter-actions">
+                    <button type="submit" class="btn-primary">Apply Filters</button>
+                    <a href="{{ url_for('search') }}" class="btn-secondary">Clear All</a>
+                </div>
+            </form>
+        </aside>
+
+        <!-- Results Section -->
+        <section class="search-results">
+            <div class="results-header">
+                <h2>Search Results {% if query %}<span class="query-highlight">"{{ query }}"</span>{% endif %}</h2>
+                <div class="results-actions">
+                    {% if results %}
+                    <button onclick="downloadCSV()" class="btn-download">📥 Download Results</button>
+                    <button onclick="toggleSuggestions()" class="btn-suggest">💡 Get Suggestions</button>
+                    {% endif %}
+                </div>
             </div>
-        </a>
-        {% endfor %}
+
+            <!-- Results Count -->
+            {% if results %}
+            <p class="results-count">Found <strong>{{ results|length }}</strong> products</p>
+            {% endif %}
+
+            <!-- Suggestions Section -->
+            <div id="suggestionsSection" class="suggestions-section" style="display: none;">
+                <h3>🤖 Recommended Products for You</h3>
+                <div class="suggestions-grid">
+                    {% for product in suggestions %}
+                    <div class="suggestion-card">
+                        <img src="{{ product.image }}" alt="{{ product.name }}" onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
+                        <h4>{{ product.name[:40] }}...</h4>
+                        <p>⭐ {{ product.ratings }}</p>
+                        <p class="price">₹{{ "{:,.0f}".format(product.discount_price) }}</p>
+                        <a href="{{ url_for('product_detail', product_id=product.product_id) }}" class="btn-small">View</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            {% if results %}
+            <div class="results-grid">
+                {% for product in results %}
+                <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
+                    <div class="product-image">
+                        {% if product.image %}
+                        <img src="{{ product.image }}" alt="{{ product.name }}"
+                            onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                        {% else %}
+                        <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</h3>
+                        <p class="product-category">{{ product.main_category }}</p>
+                        {% if product.sub_category %}
+                        <p class="product-subcategory">{{ product.sub_category }}</p>
+                        {% endif %}
+                        <div class="product-meta">
+                            <span class="product-rating">⭐ {{ product.ratings }}</span>
+                            <span class="product-reviews">({{ product.no_of_ratings }})</span>
+                        </div>
+                        <div class="price-info">
+                            {% if product.actual_price and product.actual_price > product.discount_price %}
+                            <span class="original-price">₹{{ "{:,.0f}".format(product.actual_price) }}</span>
+                            {% endif %}
+                            <span class="product-price">₹{{ "{:,.0f}".format(product.discount_price) }}</span>
+                            {% if product.actual_price and product.actual_price > 0 %}
+                            <span class="discount-badge" style="background: #e74c3c; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; margin-left: 0.3rem;">-{{ "%.0f"|format(((product.actual_price - product.discount_price) / product.actual_price) * 100) }}%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-results">
+                <p>🔍 No products found</p>
+                {% if query %}
+                <p>Try different keywords or adjust your filters</p>
+                {% else %}
+                <p>Enter a search query to find products</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </section>
     </div>
-    {% elif query %}
-    <div class="no-results">
-        <div class="no-results-icon">🔍</div>
-        <h2>No products found</h2>
-        <p>Try a different search term</p>
-    </div>
-    {% endif %}
 </div>
+
+<script>
+function downloadCSV() {
+    const results = {{ results|tojson }};
+    if (!results || results.length === 0) {
+        alert('No results to download');
+        return;
+    }
+
+    // Get filter values
+    const query = document.querySelector('input[name="q"]').value;
+    const mainCategory = document.querySelector('select[name="main_category"]').value;
+    const subCategory = document.querySelector('select[name="sub_category"]').value;
+    const minPrice = document.querySelector('input[name="min_price"]').value;
+    const maxPrice = document.querySelector('input[name="max_price"]').value;
+    const minRating = document.querySelector('select[name="min_rating"]').value;
+
+    // Prepare CSV content with filters and image link
+    let csv = 'Search Filters Applied\n';
+    csv += `"Query","${query}"\n`;
+    csv += `"Main Category","${mainCategory || 'All'}"\n`;
+    csv += `"Sub Category","${subCategory || 'All'}"\n`;
+    csv += `"Price Range","${minPrice || '0'} - ${maxPrice || 'Any'}"\n`;
+    csv += `"Minimum Rating","${minRating || 'All'}"\n`;
+    csv += `"Downloaded","${new Date().toLocaleString()}"\n\n`;
+    
+    csv += 'Product ID,Name,Category,Sub Category,Rating,No of Ratings,Original Price,Discount Price,Image Link\n';
+    
+    results.forEach(product => {
+        csv += `"${product.ProductId}","${product.name.replace(/"/g, '""')}","${product.main_category}","${product.sub_category || ''}",${product.ratings},${product.no_of_ratings},${product.actual_price || ''},${product.discount_price},"${product.image || ''}"\n`;
+    });
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search_results_${new Date().getTime()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+function toggleSuggestions() {
+    const section = document.getElementById('suggestionsSection');
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+
+<style>
+.search-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.search-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+}
+
+.filters-sidebar {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.filters-sidebar h3 {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.filter-input,
+.filter-select {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    transition: all 0.3s;
+}
+
+.filter-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.price-range {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.price-range input {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.price-range span {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: center;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    flex: 1;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    flex: 1;
+}
+
+.btn-secondary:hover {
+    background: var(--border);
+}
+
+.search-results {
+    min-height: 500px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.results-header h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.query-highlight {
+    color: var(--accent);
+}
+
+.results-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-download,
+.btn-suggest {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--accent);
+    color: white;
+}
+
+.btn-download:hover,
+.btn-suggest:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+}
+
+.results-count {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.suggestions-section {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 2px dashed var(--primary);
+}
+
+.suggestions-section h3 {
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.suggestion-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+}
+
+.suggestion-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.suggestion-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.suggestion-card h4 {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.suggestion-card p {
+    font-size: 0.85rem;
+    margin: 0.25rem 0;
+}
+
+.suggestion-card .price {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.product-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.product-image {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info {
+    padding: 1rem;
+}
+
+.product-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.product-category {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.product-subcategory {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.product-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.product-rating {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.product-reviews {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.price-info {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.product-price {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .search-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-sidebar {
+        position: static;
+    }
+
+    .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .results-actions {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}
