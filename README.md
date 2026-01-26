@@ -34,9 +34,9 @@ An AI-powered product recommendation system built with Python, Flask, and Machin
 
 | Category | Technologies |
 |----------|-------------|
-| **Backend** | Python, Flask, Flask-Login, Flask-SQLAlchemy |
+| **Backend** | Python, Flask, Flask-SQLAlchemy, MySQL |
 | **Frontend** | HTML5, CSS3, JavaScript, Chart.js |
-| **Database** | SQLite |
+| **Database** | MySQL (with SQLALchemy) |
 | **ML/Data** | Pandas, NumPy, Scikit-learn, Scikit-Surprise |
 | **Visualization** | Matplotlib, Seaborn |
 
@@ -46,53 +46,33 @@ An AI-powered product recommendation system built with Python, Flask, and Machin
 Product Recommendation System/
 ├── app/                          # Flask Web Application
 │   ├── app.py                    # Main Flask application
-│   ├── static/
-│   │   ├── css/style.css         # Stylesheet
-│   │   └── js/main.js            # JavaScript
-│   └── templates/                # HTML templates
-│       ├── base.html
-│       ├── index.html
-│       ├── login.html
-│       ├── signup.html
-│       ├── dashboard.html
-│       ├── search.html
-│       └── product.html
+│   ├── static/                   # Static assets (CSS, JS, Images)
+│   └── templates/                # HTML templates (Dashboard, Search, etc.)
 │
 ├── src/                          # Source Code
 │   ├── components/               # Data processing modules
-│   │   ├── data_loader.py
-│   │   ├── data_cleaner.py
-│   │   ├── data_combiner.py
-│   │   ├── eda.py
-│   │   └── database.py
-│   ├── models/                   # ML models
-│   │   ├── baseline_model.py
-│   │   ├── knn_model.py
-│   │   ├── svd_model.py
-│   │   └── knn_with_kmeans.py
-│   ├── inference/                # Prediction modules
-│   │   ├── predictor.py
-│   │   └── search_recommendation.py
-│   └── testing/                  # A/B testing
-│       └── ab_test.py
+│   │   └── database.py           # SQLALchemy Models & DB Init
+│   ├── models/                   # ML models (SVD, KNN, etc.)
+│   ├── inference/                # Prediction & Recommendation logic
+│   └── testing/                  # A/B testing modules
 │
-├── artifacts/                    # Generated outputs
-│   ├── eda/                      # EDA visualizations
-│   └── final_model_config.json
+├── scripts/                      # Utility Scripts
+│   ├── migrate_csv_to_db.py      # Import CSV data to MySQL
+│   └── reset_db.py               # Reset and Reinitialize Database
 │
-├── presentation/                 # Project presentations
-│
+├── artifacts/                    # Generated ML models & plots
+├── data/                         # Datasets (Raw & Processed)
 ├── main.py                       # ML Pipeline entry point
-├── requirements.txt              # Python dependencies
-├── setup.py                      # Package setup
-└── README.md                     # This file
+├── config.py                     # Flask Configuration
+└── requirements.txt              # Project dependencies
 ```
 
 ## 🚀 Installation
 
 ### Prerequisites
-- Python 3.10 or higher
-- pip package manager
+- Python 3.10+
+- MySQL Server
+- Optional: Virtual Environment (recommended)
 
 ### Steps
 
@@ -102,15 +82,19 @@ Product Recommendation System/
    cd Product-Recommendation-System
    ```
 
-2. **Create virtual environment**
+2. **Setup Environment (Choose one: venv or Conda)**
+
+   **Option A: Virtual Environment (venv)**
    ```bash
    python -m venv venv
-   
    # Windows
-   venv\Scripts\activate
-   
-   # Linux/Mac
-   source venv/bin/activate
+   source venv/Scripts/activate
+   ```
+
+   **Option B: Conda Environment**
+   ```bash
+   conda create -n product_rec python=3.10 -y
+   conda activate product_rec
    ```
 
 3. **Install dependencies**
@@ -118,27 +102,29 @@ Product Recommendation System/
    pip install -r requirements.txt
    ```
 
-4. **Download the dataset**
-   - Download Amazon Products dataset
-   - Place it in `data/raw/Amazon-Products.csv`
-
-5. **Run the ML pipeline** (optional - trains models)
-   ```bash
-   python main.py
+4. **Environment Configuration**
+   Create a `.env` file in the root directory:
+   ```env
+   SECRET_KEY=your_secret_key
+   DB_USER=root
+   DB_PASSWORD=your_password
+   DB_HOST=localhost
+   DB_NAME=product_rec_db
    ```
 
-6. **Initialize the database**
+5. **Initialize Database**
+   Run the utility script to create tables and import data:
    ```bash
-   python -c "from src.components.database import init_database; init_database()"
+   python scripts/migrate_csv_to_db.py
    ```
 
-7. **Start the web application**
+6. **Start the web application**
    ```bash
    cd app
    python app.py
    ```
 
-8. **Open in browser**
+7. **Open in browser**
    ```
    http://127.0.0.1:5000
    ```
