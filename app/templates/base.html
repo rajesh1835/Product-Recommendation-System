@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Product Recommender{% endblock %}</title>
+    <title>{% block title %}Smart Pic{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,8 +14,9 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="nav-logo">
-                🛍️ ProductRec
+            <a href="{{ url_for('index') }}" class="nav-logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Smart Pic Logo" style="height: 32px; width: 32px;">
+                Smart Pic
             </a>
 
             <form class="nav-search" action="{{ url_for('search') }}" method="GET">
@@ -59,7 +60,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
-            <p>© 2024 Product Recommendation System | Built with Flask & Machine Learning</p>
+            <p>© 2026 Smart Pic Recommendation System | Built with Flask & Machine Learning</p>
         </div>
     </footer>
 

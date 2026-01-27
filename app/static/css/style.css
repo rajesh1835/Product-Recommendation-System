@@ -760,3 +760,17 @@ a {
         flex-direction: column;
     }
 }
+
+/* Best Deals Specific */
+.best-deals-section {
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 3rem 0;
+    padding: 3rem 1rem;
+    box-shadow: 0 4px 6px -1px var(--shadow);
+}
+
+.best-deals-section .section-header {
+    margin-bottom: 2rem;
+}

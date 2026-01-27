@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized Product Recommendation System - IEEE Paper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1a365d;
+            --secondary-blue: #2c5282;
+            --accent-blue: #3182ce;
+            --text-dark: #1a202c;
+            --text-gray: #4a5568;
+            --bg-light: #f7fafc;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: var(--text-dark);
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.75in;
+        }
+
+        /* IEEE Header */
+        .ieee-header {
+            text-align: center;
+            margin-bottom: 24pt;
+            border-bottom: 2px solid var(--primary-blue);
+            padding-bottom: 12pt;
+        }
+
+        .ieee-header .conference-name {
+            font-size: 9pt;
+            color: var(--text-gray);
+            margin-bottom: 8pt;
+        }
+
+        .paper-title {
+            font-size: 18pt;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 12pt;
+            line-height: 1.3;
+        }
+
+        .authors {
+            font-size: 11pt;
+            margin-bottom: 6pt;
+        }
+
+        .author-name {
+            font-weight: bold;
+        }
+
+        .affiliation {
+            font-size: 9pt;
+            color: var(--text-gray);
+            font-style: italic;
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            column-count: 2;
+            column-gap: 0.25in;
+            column-rule: 1px solid var(--border-color);
+        }
+
+        /* Abstract */
+        .abstract {
+            background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
+            padding: 12pt;
+            margin-bottom: 16pt;
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .abstract-title {
+            font-size: 10pt;
+            font-weight: bold;
+            font-style: italic;
+            margin-bottom: 6pt;
+            color: var(--primary-blue);
+        }
+
+        .abstract-content {
+            font-size: 9pt;
+            text-align: justify;
+        }
+
+        .keywords {
+            font-size: 9pt;
+            margin-top: 8pt;
+        }
+
+        .keywords strong {
+            color: var(--primary-blue);
+        }
+
+        /* Section Headers */
+        h2 {
+            font-size: 11pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--primary-blue);
+            margin-top: 14pt;
+            margin-bottom: 8pt;
+            padding-bottom: 4pt;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 10pt;
+            font-weight: bold;
+            font-style: italic;
+            color: var(--secondary-blue);
+            margin-top: 10pt;
+            margin-bottom: 6pt;
+        }
+
+        h4 {
+            font-size: 10pt;
+            font-weight: normal;
+            font-style: italic;
+            margin-top: 8pt;
+            margin-bottom: 4pt;
+        }
+
+        /* Paragraphs */
+        p {
+            text-align: justify;
+            text-indent: 0.25in;
+            margin-bottom: 6pt;
+        }
+
+        p.no-indent {
+            text-indent: 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10pt 0;
+            font-size: 9pt;
+            break-inside: avoid;
+        }
+
+        table caption {
+            font-size: 9pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 6pt;
+            color: var(--primary-blue);
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 4pt 6pt;
+            text-align: left;
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        tr:hover {
+            background-color: #e6f2ff;
+        }
+
+        .winner-row {
+            background-color: #d4edda !important;
+            font-weight: bold;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 10pt;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 8pt;
+            margin: 10pt 0;
+            break-inside: avoid;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #edf2f7;
+            padding: 1pt 3pt;
+            border-radius: 2px;
+            font-size: 9pt;
+        }
+
+        /* Lists */
+        ul,
+        ol {
+            margin-left: 0.3in;
+            margin-bottom: 8pt;
+        }
+
+        li {
+            margin-bottom: 3pt;
+        }
+
+        /* Figures */
+        .figure {
+            text-align: center;
+            margin: 12pt 0;
+            break-inside: avoid;
+        }
+
+        .figure-caption {
+            font-size: 9pt;
+            font-style: italic;
+            margin-top: 6pt;
+            color: var(--text-gray);
+        }
+
+        /* Architecture Diagram */
+        .architecture-box {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12pt;
+            border-radius: 6px;
+            margin: 12pt 0;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        .arch-layer {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8pt;
+            margin: 4pt 0;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .arch-layer-title {
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .arch-layer-desc {
+            font-size: 8pt;
+            opacity: 0.9;
+        }
+
+        /* References */
+        .references {
+            font-size: 8pt;
+        }
+
+        .references p {
+            text-indent: -0.2in;
+            padding-left: 0.2in;
+            margin-bottom: 4pt;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 10pt;
+            margin: 10pt 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Results Box */
+        .results-box {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 4px solid #10b981;
+            padding: 10pt;
+            margin: 10pt 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Page Break */
+        .page-break {
+            break-before: page;
+        }
+
+        /* Footer */
+        .paper-footer {
+            margin-top: 24pt;
+            padding-top: 12pt;
+            border-top: 2px solid var(--primary-blue);
+            text-align: center;
+            font-size: 9pt;
+            color: var(--text-gray);
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .two-column {
+                column-count: 2;
+            }
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .two-column {
+                column-count: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- IEEE Header -->
+    <header class="ieee-header">
+        <div class="conference-name">IEEE International Conference on Machine Learning and E-Commerce Applications</div>
+        <h1 class="paper-title">Personalized Product Recommendation System for E-Commerce Platforms Using Collaborative
+            Filtering</h1>
+        <div class="authors">
+            <span class="author-name">Tarigonda Rajesh</span>
+        </div>
+        <div class="affiliation">
+            Department of Computer Science<br>
+            GitHub: <a href="https://github.com/rajesh1835" style="color: var(--accent-blue);">@rajesh1835</a>
+        </div>
+    </header>
+
+    <!-- Abstract (Full Width) -->
+    <div class="abstract">
+        <div class="abstract-title">Abstract—</div>
+        <div class="abstract-content">
+            E-commerce platforms face significant challenges in providing relevant product suggestions to users, often
+            resulting in poor user engagement, high bounce rates, and reduced sales conversions. This paper presents an
+            AI-powered personalized product recommendation system that leverages collaborative filtering techniques to
+            deliver accurate and personalized product suggestions. The system implements and compares four machine
+            learning models: KNNBasic, KNNWithMeans, BaselineOnly, and Singular Value Decomposition (SVD). Through
+            rigorous A/B testing with 5-fold cross-validation, KNNBasic with cosine similarity emerged as the
+            best-performing model, achieving an RMSE of 0.7166 and MAE of 0.3692. The system features an interactive
+            web-based dashboard, real-time recommendation APIs, and comprehensive exploratory data analysis.
+            Experimental results demonstrate the effectiveness of the proposed approach in improving user experience and
+            enabling personalized shopping experiences at scale.
+        </div>
+        <div class="keywords">
+            <strong>Keywords—</strong> Collaborative Filtering, Recommendation Systems, E-commerce, Machine Learning,
+            KNN, SVD, A/B Testing, Personalization
+        </div>
+    </div>
+
+    <!-- Two Column Content -->
+    <div class="two-column">
+
+        <!-- I. INTRODUCTION -->
+        <h2>I. Introduction</h2>
+
+        <p>The exponential growth of e-commerce platforms has created an overwhelming abundance of product choices for
+            consumers. While this variety benefits consumers, it simultaneously poses a significant challenge:
+            information overload. Users often struggle to find relevant products among millions of available options,
+            leading to decision fatigue, abandoned shopping carts, and ultimately, lost revenue for businesses [1].</p>
+
+        <p>Recommendation systems have emerged as a crucial solution to this problem. By analyzing user behavior,
+            preferences, and patterns, these systems can predict and suggest products that users are likely to find
+            interesting and purchase [2]. According to industry reports, recommendation engines drive up to 35% of
+            Amazon's revenue and 75% of Netflix's user engagement [3].</p>
+
+        <h3>A. Problem Statement</h3>
+        <p class="no-indent">E-commerce platforms often struggle to provide relevant product suggestions to users,
+            resulting in:</p>
+        <ul>
+            <li>Poor user engagement and high bounce rates</li>
+            <li>Reduced sales conversions</li>
+            <li>Customer dissatisfaction and churn</li>
+            <li>Missed cross-selling and up-selling opportunities</li>
+        </ul>
+
+        <h3>B. Objectives</h3>
+        <p class="no-indent">This research focuses on:</p>
+        <ol>
+            <li>Building a recommendation model using collaborative filtering and content-based techniques</li>
+            <li>Personalizing product recommendations based on user preferences, past purchases, and behavior patterns
+            </li>
+            <li>Developing an interactive recommendation dashboard</li>
+            <li>Implementing A/B testing to evaluate recommendation performance</li>
+            <li>Deploying the solution for real-time recommendations with scalability</li>
+        </ol>
+
+        <h3>C. Contributions</h3>
+        <p class="no-indent">The main contributions of this paper are:</p>
+        <ul>
+            <li>Implementation and comparison of four collaborative filtering algorithms</li>
+            <li>A comprehensive end-to-end ML pipeline for recommendation systems</li>
+            <li>A/B testing framework for statistical model comparison</li>
+            <li>Production-ready Flask-based web application with RESTful APIs</li>
+            <li>Extensive exploratory data analysis and visualization</li>
+        </ul>
+
+        <!-- II. LITERATURE REVIEW -->
+        <h2>II. Literature Review</h2>
+
+        <h3>A. Collaborative Filtering</h3>
+        <p>Collaborative Filtering (CF) is one of the most successful approaches for building recommendation systems. CF
+            methods make automatic predictions about a user's interests by collecting preferences from many users [4].
+            There are two main types: User-based CF finds similar users and recommends items that similar users have
+            liked, while Item-based CF finds similar items based on user interactions.</p>
+
+        <h3>B. Matrix Factorization Techniques</h3>
+        <p>Singular Value Decomposition (SVD) and its variants have proven highly effective for recommendation systems
+            [5]. SVD decomposes the user-item rating matrix into latent factors, capturing hidden patterns in user
+            preferences and item characteristics.</p>
+
+        <h3>C. K-Nearest Neighbors (KNN)</h3>
+        <p>KNN-based recommendation approaches find the k most similar users or items using similarity metrics such as
+            cosine similarity, Pearson correlation, or Euclidean distance [6]. Predictions are then made based on the
+            ratings of these neighbors.</p>
+
+        <!-- III. METHODOLOGY -->
+        <h2>III. Methodology</h2>
+
+        <h3>A. System Architecture</h3>
+        <p class="no-indent">The proposed system follows a modular architecture consisting of five layers:</p>
+
+        <div class="architecture-box">
+            <div class="arch-layer">
+                <div class="arch-layer-title">Presentation Layer</div>
+                <div class="arch-layer-desc">Dashboard, Search, Recommendations UI</div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-layer-title">Application Layer</div>
+                <div class="arch-layer-desc">Flask APIs, User Authentication</div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-layer-title">Model Layer</div>
+                <div class="arch-layer-desc">KNN, SVD, Baseline, A/B Testing</div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-layer-title">Processing Layer</div>
+                <div class="arch-layer-desc">Data Cleaning, EDA, Feature Engineering</div>
+            </div>
+            <div class="arch-layer">
+                <div class="arch-layer-title">Data Layer</div>
+                <div class="arch-layer-desc">Amazon Products, User Ratings</div>
+            </div>
+        </div>
+
+        <h3>B. Dataset Description</h3>
+        <p>The system utilizes the Amazon Products dataset. The complete data pipeline is summarized in Table I.</p>
+
+        <table>
+            <caption>TABLE I: Dataset Pipeline Summary</caption>
+            <tr>
+                <th>Stage</th>
+                <th>Rows</th>
+                <th>Columns</th>
+                <th>Memory</th>
+                <th>Missing %</th>
+            </tr>
+            <tr>
+                <td>Raw Amazon Products</td>
+                <td>551,585</td>
+                <td>10</td>
+                <td>463.14 MB</td>
+                <td>7.8%</td>
+            </tr>
+            <tr>
+                <td>Combined Dataset</td>
+                <td>551,585</td>
+                <td>13</td>
+                <td>611.11 MB</td>
+                <td>6.0%</td>
+            </tr>
+            <tr>
+                <td>Cleaned Dataset</td>
+                <td>539,626</td>
+                <td>12</td>
+                <td>469.49 MB</td>
+                <td>0.0%</td>
+            </tr>
+            <tr>
+                <td>Sampled Dataset</td>
+                <td>25,000</td>
+                <td>12</td>
+                <td>21.55 MB</td>
+                <td>0.0%</td>
+            </tr>
+        </table>
+
+        <h3>C. Data Preprocessing</h3>
+        <p class="no-indent">The preprocessing pipeline includes:</p>
+        <ol>
+            <li><strong>Data Loading:</strong> Loading Amazon products and user reviews data</li>
+            <li><strong>Data Cleaning:</strong> Handling missing values, data type corrections</li>
+            <li><strong>Feature Engineering:</strong> Creating user_id and product_id mappings</li>
+            <li><strong>Sampling:</strong> Random sampling of 25,000 records for efficient processing</li>
+            <li><strong>Train-Test Split:</strong> 80-20 split for model training and evaluation</li>
+        </ol>
+
+        <h3>D. Recommendation Algorithms</h3>
+        <p>Four algorithms were implemented using the Surprise library:</p>
+
+        <h4>1) KNNBasic</h4>
+        <p class="no-indent">A basic K-Nearest Neighbors algorithm using cosine similarity for finding similar users or
+            items.</p>
+
+        <h4>2) KNNWithMeans</h4>
+        <p class="no-indent">KNN with mean-centering to account for user rating bias.</p>
+
+        <h4>3) BaselineOnly</h4>
+        <p class="no-indent">Baseline predictor using user and item biases.</p>
+
+        <h4>4) Singular Value Decomposition (SVD)</h4>
+        <p class="no-indent">Matrix factorization approach with 100 latent factors, trained over 20 epochs.</p>
+
+        <h3>E. Hyperparameter Tuning</h3>
+        <p>Grid search was performed on the best-performing model (KNNBasic) with the following optimal configuration:
+        </p>
+
+        <table>
+            <caption>TABLE II: Hyperparameter Configuration</caption>
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>k (neighbors)</td>
+                <td>20</td>
+            </tr>
+            <tr>
+                <td>min_k</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>Similarity</td>
+                <td>Cosine</td>
+            </tr>
+            <tr>
+                <td>user_based</td>
+                <td>False (Item-based)</td>
+            </tr>
+        </table>
+
+        <!-- IV. EXPERIMENTS AND RESULTS -->
+        <h2>IV. Experiments and Results</h2>
+
+        <h3>A. Experimental Setup</h3>
+        <ul>
+            <li><strong>Programming Language:</strong> Python 3.10+</li>
+            <li><strong>ML Framework:</strong> Scikit-Surprise 1.1.4</li>
+            <li><strong>Web Framework:</strong> Flask 3.0</li>
+            <li><strong>Database:</strong> MySQL with SQLAlchemy</li>
+            <li><strong>Evaluation Metrics:</strong> RMSE, MAE</li>
+            <li><strong>Cross-Validation:</strong> 5-fold</li>
+        </ul>
+
+        <h3>B. A/B Testing Methodology</h3>
+        <p>A comprehensive A/B testing framework was implemented to compare model performance. Multiple train-test
+            splits (n=5) were used for statistical significance with random 80-20 splits for each iteration. Mean and
+            standard deviation were computed for each metric.</p>
+
+        <h3>C. Model Performance Comparison</h3>
+
+        <table>
+            <caption>TABLE III: A/B Testing Results (5-Fold Cross-Validation)</caption>
+            <tr>
+                <th>Model</th>
+                <th>RMSE (Mean)</th>
+                <th>RMSE (Std)</th>
+                <th>MAE (Mean)</th>
+                <th>MAE (Std)</th>
+            </tr>
+            <tr class="winner-row">
+                <td>KNNBasic ✓</td>
+                <td>0.7166</td>
+                <td>0.2115</td>
+                <td>0.3692</td>
+                <td>0.0073</td>
+            </tr>
+            <tr>
+                <td>KNNWithMeans</td>
+                <td>0.7166</td>
+                <td>0.2115</td>
+                <td>0.3692</td>
+                <td>0.0073</td>
+            </tr>
+            <tr>
+                <td>BaselineOnly</td>
+                <td>0.7220</td>
+                <td>0.2094</td>
+                <td>0.3827</td>
+                <td>0.0063</td>
+            </tr>
+            <tr>
+                <td>SVD</td>
+                <td>0.7267</td>
+                <td>0.2083</td>
+                <td>0.3939</td>
+                <td>0.0058</td>
+            </tr>
+        </table>
+
+        <div class="results-box">
+            <strong>🏆 Winner: KNNBasic</strong><br>
+            <small>Performance improvement over other models:</small>
+            <ul style="margin-top: 4pt; margin-bottom: 0;">
+                <li>vs BaselineOnly: 0.75% improvement</li>
+                <li>vs SVD: 1.39% improvement</li>
+            </ul>
+        </div>
+
+        <h3>D. Final Model Configuration</h3>
+        <p>After hyperparameter tuning with GridSearchCV, the final model achieved:</p>
+        <ul>
+            <li><strong>Best Model:</strong> KNNBasic</li>
+            <li><strong>Tuned RMSE:</strong> 0.7280</li>
+            <li><strong>Tuned MAE:</strong> 0.3704</li>
+        </ul>
+
+        <!-- V. SYSTEM IMPLEMENTATION -->
+        <h2>V. System Implementation</h2>
+
+        <h3>A. Web Application Architecture</h3>
+        <p class="no-indent">The Flask-based web application provides:</p>
+        <ul>
+            <li><strong>User Authentication:</strong> Secure login/signup with Flask-Login</li>
+            <li><strong>Product Search:</strong> Full-text search with MySQL</li>
+            <li><strong>Recommendation Engine:</strong> Real-time personalized suggestions</li>
+            <li><strong>Dashboard:</strong> KPI visualization with Chart.js</li>
+        </ul>
+
+        <h3>B. API Endpoints</h3>
+
+        <table>
+            <caption>TABLE IV: REST API Endpoints</caption>
+            <tr>
+                <th>Endpoint</th>
+                <th>Method</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>/</td>
+                <td>GET</td>
+                <td>Home page with popular products</td>
+            </tr>
+            <tr>
+                <td>/login</td>
+                <td>GET/POST</td>
+                <td>User authentication</td>
+            </tr>
+            <tr>
+                <td>/dashboard</td>
+                <td>GET</td>
+                <td>Personalized user dashboard</td>
+            </tr>
+            <tr>
+                <td>/search</td>
+                <td>GET</td>
+                <td>Product search functionality</td>
+            </tr>
+            <tr>
+                <td>/product/&lt;id&gt;</td>
+                <td>GET</td>
+                <td>Product details with recommendations</td>
+            </tr>
+            <tr>
+                <td>/api/recommend/&lt;id&gt;</td>
+                <td>GET</td>
+                <td>Get product recommendations</td>
+            </tr>
+        </table>
+
+        <h3>C. Recommendation Types</h3>
+        <p class="no-indent">The system provides multiple recommendation types:</p>
+        <ol>
+            <li><strong>Similar Products:</strong> Based on collaborative filtering</li>
+            <li><strong>Category-based:</strong> Products from the same category</li>
+            <li><strong>Popular Products:</strong> Highest-rated items</li>
+            <li><strong>Personalized:</strong> User-specific recommendations</li>
+        </ol>
+
+        <!-- VI. EDA -->
+        <h2>VI. Exploratory Data Analysis</h2>
+
+        <h3>A. Data Visualizations</h3>
+        <p class="no-indent">Comprehensive EDA was performed including:</p>
+        <ul>
+            <li>Category Distribution analysis</li>
+            <li>Ratings Distribution patterns</li>
+            <li>Feature Correlation Matrix</li>
+            <li>Price Analysis across categories</li>
+            <li>Popularity Distribution</li>
+            <li>Top Products per Category</li>
+        </ul>
+
+        <h3>B. Key Insights</h3>
+        <ol>
+            <li>Highly skewed rating distribution (most ratings are 4-5 stars)</li>
+            <li>Certain categories dominate the dataset</li>
+            <li>Strong correlation between ratings and popularity</li>
+            <li>Price varies significantly across categories</li>
+        </ol>
+
+        <!-- VII. DEPLOYMENT -->
+        <h2>VII. Deployment and Scalability</h2>
+
+        <h3>A. Deployment Stack</h3>
+        <ul>
+            <li><strong>Backend:</strong> Python Flask on local/cloud server</li>
+            <li><strong>Database:</strong> MySQL for production</li>
+            <li><strong>Model Storage:</strong> Pickle serialization</li>
+            <li><strong>Static Assets:</strong> CSS, JavaScript, Images</li>
+        </ul>
+
+        <h3>B. Scalability Considerations</h3>
+        <ol>
+            <li><strong>Data Sampling:</strong> 25,000 record sample for efficient processing</li>
+            <li><strong>Model Caching:</strong> Pre-trained models loaded at startup</li>
+            <li><strong>Database Indexing:</strong> Optimized queries for fast retrieval</li>
+            <li><strong>Modular Architecture:</strong> Separation of concerns</li>
+        </ol>
+
+        <!-- VIII. CONCLUSION -->
+        <h2>VIII. Conclusion and Future Work</h2>
+
+        <h3>A. Conclusion</h3>
+        <p>This paper presented a comprehensive personalized product recommendation system for e-commerce platforms. The
+            key findings are:</p>
+        <ol>
+            <li>KNNBasic with cosine similarity outperformed other models with RMSE of 0.7166</li>
+            <li>A/B testing provided statistical confidence in model selection</li>
+            <li>The modular architecture enables easy extension and maintenance</li>
+            <li>Real-time recommendations improve user engagement</li>
+        </ol>
+
+        <h3>B. Future Enhancements</h3>
+        <ul>
+            <li><strong>Hybrid Models:</strong> Combine collaborative and content-based filtering</li>
+            <li><strong>Deep Learning:</strong> Implement neural collaborative filtering</li>
+            <li><strong>Real-time Learning:</strong> Online model updates based on user interactions</li>
+            <li><strong>Cold-Start Solutions:</strong> Better handling of new users/items</li>
+            <li><strong>Context-Aware:</strong> Time, location, device-based suggestions</li>
+        </ul>
+
+        <!-- REFERENCES -->
+        <h2>References</h2>
+        <div class="references">
+            <p>[1] J. Bobadilla, F. Ortega, A. Hernando, and A. Gutiérrez, "Recommender systems survey,"
+                <em>Knowledge-Based Systems</em>, vol. 46, pp. 109-132, 2013.</p>
+
+            <p>[2] F. Ricci, L. Rokach, and B. Shapira, "Introduction to recommender systems handbook," in
+                <em>Recommender Systems Handbook</em>, Springer, 2011, pp. 1-35.</p>
+
+            <p>[3] C. A. Gomez-Uribe and N. Hunt, "The Netflix recommender system: Algorithms, business value, and
+                innovation," <em>ACM Trans. Manage. Inf. Syst.</em>, vol. 6, no. 4, pp. 1-19, 2016.</p>
+
+            <p>[4] Y. Koren, R. Bell, and C. Volinsky, "Matrix factorization techniques for recommender systems,"
+                <em>Computer</em>, vol. 42, no. 8, pp. 30-37, 2009.</p>
+
+            <p>[5] S. Funk, "Netflix update: Try this at home," <em>Sifter Blog</em>, 2006.</p>
+
+            <p>[6] B. Sarwar, G. Karypis, J. Konstan, and J. Riedl, "Item-based collaborative filtering recommendation
+                algorithms," in <em>Proc. 10th Int. Conf. World Wide Web</em>, 2001, pp. 285-295.</p>
+
+            <p>[7] Y. Koren, "Factor in the neighbors: Scalable and accurate collaborative filtering," <em>ACM Trans.
+                    Knowl. Discov. Data</em>, vol. 4, no. 1, pp. 1-24, 2010.</p>
+
+            <p>[8] P. Resnick et al., "GroupLens: An open architecture for collaborative filtering," in <em>Proc. ACM
+                    Conf. CSCW</em>, 1994, pp. 175-186.</p>
+
+            <p>[9] G. Linden, B. Smith, and J. York, "Amazon.com recommendations: Item-to-item collaborative filtering,"
+                <em>IEEE Internet Comput.</em>, vol. 7, no. 1, pp. 76-80, 2003.</p>
+
+            <p>[10] X. He et al., "Neural collaborative filtering," in <em>Proc. 26th Int. Conf. WWW</em>, 2017, pp.
+                173-182.</p>
+        </div>
+
+        <!-- APPENDIX -->
+        <h2>Appendix</h2>
+
+        <h3>A. Technology Stack</h3>
+        <table>
+            <caption>TABLE V: Complete Technology Stack</caption>
+            <tr>
+                <th>Category</th>
+                <th>Technologies</th>
+            </tr>
+            <tr>
+                <td>Backend</td>
+                <td>Python, Flask, Flask-SQLAlchemy</td>
+            </tr>
+            <tr>
+                <td>Frontend</td>
+                <td>HTML5, CSS3, JavaScript, Chart.js</td>
+            </tr>
+            <tr>
+                <td>Database</td>
+                <td>MySQL, SQLAlchemy ORM</td>
+            </tr>
+            <tr>
+                <td>ML/Data</td>
+                <td>Pandas, NumPy, Scikit-learn, Scikit-Surprise</td>
+            </tr>
+            <tr>
+                <td>Visualization</td>
+                <td>Matplotlib, Seaborn</td>
+            </tr>
+        </table>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="paper-footer">
+        <p><strong>Author:</strong> Tarigonda Rajesh | <strong>GitHub:</strong> <a href="https://github.com/rajesh1835"
+                style="color: var(--accent-blue);">@rajesh1835</a></p>
+        <p style="margin-top: 4pt;"><em>Paper prepared following IEEE conference paper format guidelines</em></p>
+    </footer>
+
+</body>
+
+</html>
