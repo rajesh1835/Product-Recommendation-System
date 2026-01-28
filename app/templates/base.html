@@ -7,6 +7,7 @@
     <title>{% block title %}Smart Pic{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -14,8 +15,9 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="nav-logo" style="display: flex; align-items: center; gap: 10px;">
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Smart Pic Logo" style="height: 32px; width: 32px;">
+            <a href="{{ url_for('index') }}" class="nav-logo">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Smart Pic Logo"
+                    style="height: 32px; width: 32px;">
                 Smart Pic
             </a>
 
@@ -30,9 +32,12 @@
                 </button>
                 <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
                 {% if session.get('user_id') %}
-                <a href="{{ url_for('logout') }}" class="nav-link" style="color: #ff6b6b;">Logout ({{ session.get('username') }})</a>
+                <a href="{{ url_for('logout') }}" class="nav-link" style="color: #ff6b6b;">Logout ({{
+                    session.get('username') }})</a>
                 {% else %}
-                <a href="{{ url_for('login') }}" class="nav-link" style="background: #3498db; color: white; padding: 0.5rem 1rem; border-radius: 4px;">Sign In / Sign Up</a>
+                <a href="{{ url_for('login') }}" class="nav-link"
+                    style="background: #3498db; color: white; padding: 0.5rem 1rem; border-radius: 4px;">Sign In / Sign
+                    Up</a>
                 {% endif %}
             </div>
         </div>

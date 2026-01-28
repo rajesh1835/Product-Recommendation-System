@@ -20,6 +20,7 @@ sys.path.insert(0, PROJECT_ROOT)
 from config import Config
 from src.components.database import db, Product, User, init_db
 from src.inference.search_recommendation import ProductRecommender
+from src.inference.hybrid_recommender import HybridRecommender
 
 # Decorator for login required
 def login_required(f):
@@ -44,12 +45,24 @@ init_db(app)
 
 # Initialize recommender
 recommender = None
+hybrid_recommender = None
 
 def get_recommender():
     global recommender
     if recommender is None:
         recommender = ProductRecommender()
     return recommender
+
+def get_hybrid_recommender():
+    """Get or initialize the hybrid recommender"""
+    global hybrid_recommender
+    if hybrid_recommender is None:
+        try:
+            hybrid_recommender = HybridRecommender(alpha=0.5)
+        except Exception as e:
+            print(f"⚠️ Error initializing hybrid recommender: {e}")
+            return None
+    return hybrid_recommender
 
 # Get products from MySQL database
 def get_products_from_db(limit=None):
@@ -442,24 +455,81 @@ def product_detail(product_id):
             flash('Product not found', 'error')
             return redirect(url_for('index'))
         
-        # Get similar products by rating
-        similar = Product.query.filter(
+        # Try to use hybrid recommender for similar products
+        hybrid_recs = []
+        hr = get_hybrid_recommender()
+        if hr:
+            user_id = session.get('user_id')  # Get logged-in user if available
+            hybrid_recs = hr.get_hybrid_recommendations(product_id, user_id=user_id, n=6)
+        
+        # Fallback to category-based if hybrid fails
+        if not hybrid_recs:
+            similar = Product.query.filter(
+                Product.main_category == product.main_category,
+                Product.id != product_id
+            ).order_by(Product.ratings.desc()).limit(6).all()
+            
+            hybrid_recs = [{
+                'ProductId': p.product_id,
+                'name': p.name, 
+                'main_category': p.main_category,
+                'discount_price': p.discount_price,
+                'actual_price': p.actual_price or 0,
+                'ratings': p.ratings,
+                'image': p.image,
+                'similarity_score': 0,
+                'rec_type': 'category'
+            } for p in similar]
+        
+        # Get related products from same category (different from hybrid recs)
+        hybrid_pids = [r.get('ProductId') for r in hybrid_recs]
+        related = Product.query.filter(
             Product.main_category == product.main_category,
-            Product.id != product_id
+            Product.product_id != product_id,
+            ~Product.product_id.in_(hybrid_pids) if hybrid_pids else True
         ).order_by(Product.ratings.desc()).limit(6).all()
         
-        similar_list = [{
+        related_list = [{
             'ProductId': p.product_id,
             'name': p.name, 
-            'price': p.discount_price, 
-            'rating': p.ratings,
-            'image': p.image
-        } for p in similar]
+            'main_category': p.main_category,
+            'discount_price': p.discount_price,
+            'actual_price': p.actual_price or 0,
+            'ratings': p.ratings,
+            'image': p.image,
+            'rec_type': 'related'
+        } for p in related]
+        
+        # Track recommendation
+        from src.components.database import Recommendation
+        from datetime import date
+        today = date.today()
+        rec = Recommendation.query.filter_by(date=today).first()
+        if rec:
+            rec.recommendation_count += len(hybrid_recs) + len(related_list)
+        else:
+            rec = Recommendation(recommendation_count=len(hybrid_recs) + len(related_list), date=today)
+        db.session.add(rec)
+        db.session.commit()
+        
+        # Build product dict with all needed fields
+        product_dict = {
+            'ProductId': product.product_id, 
+            'name': product.name, 
+            'main_category': product.main_category,
+            'sub_category': product.sub_category or '',
+            'discount_price': product.discount_price,
+            'actual_price': product.actual_price or 0,
+            'ratings': product.ratings,
+            'no_of_ratings': product.no_of_ratings or 0,
+            'image': product.image
+        }
         
         return render_template('product.html', 
-                             product={'ProductId': product.product_id, 'name': product.name, 'main_category': product.main_category, 'price': product.discount_price, 'rating': product.ratings, 'image': product.image},
-                             similar=similar_list,
-                             related=similar_list)
+                             product=product_dict,
+                             similar=hybrid_recs,
+                             related=related_list,
+                             recommendation_type='hybrid' if hr else 'category')
 
 # -----------------------------
 # API ROUTES
@@ -489,6 +559,22 @@ def api_recommend(product_id):
         if not product:
             return jsonify({'error': 'Product not found'}), 404
         
+        # Try hybrid recommendations first
+        hr = get_hybrid_recommender()
+        recommendation_type = 'category'
+        
+        if hr:
+            user_id = session.get('user_id')
+            hybrid_recs = hr.get_hybrid_recommendations(product_id, user_id=user_id, n=6)
+            if hybrid_recs:
+                recommendation_type = 'hybrid'
+                return jsonify({
+                    'similar': hybrid_recs,
+                    'related': hybrid_recs,
+                    'recommendation_type': recommendation_type
+                })
+        
+        # Fallback to category-based
         similar = Product.query.filter(
             Product.main_category == product.main_category,
             Product.id != product_id
@@ -497,14 +583,16 @@ def api_recommend(product_id):
         similar_list = [{
             'ProductId': p.product_id,
             'name': p.name, 
-            'price': p.discount_price, 
+            'discount_price': p.discount_price, 
             'ratings': p.ratings,
-            'image': p.image
+            'image': p.image,
+            'rec_type': 'category'
         } for p in similar]
         
         return jsonify({
             'similar': similar_list,
-            'related': similar_list
+            'related': similar_list,
+            'recommendation_type': recommendation_type
         })
 
 @app.route('/api/stats')

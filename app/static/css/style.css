@@ -77,9 +77,22 @@ a {
 }
 
 .nav-logo {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.6rem;
+    font-weight: 800;
     color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: -0.5px;
+    transition: transform 0.3s;
+}
+
+.nav-logo:hover {
+    transform: scale(1.02);
+}
+
+.nav-logo img {
+    filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.2));
 }
 
 .nav-search {
