@@ -39,6 +39,7 @@
             font-size: 3rem;
             background: linear-gradient(90deg, #818cf8, #c084fc);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 15px;
         }
@@ -170,8 +171,8 @@
 <body>
 
     <header>
-        <h1>Code Walkthrough Guide</h1>
-        <p class="subtitle">E-Commerce Product Recommendation System</p>
+        <h1>SmartPic Code Walkthrough</h1>
+        <p class="subtitle">Hybrid ML Recommendation Pipeline</p>
     </header>
 
     <div class="container">
@@ -306,23 +307,21 @@
             <div class="flow-step">
                 <div class="step-num">🔍</div>
                 <div>
-                    <strong>The Cold Start Problem:</strong> What if a new product has no ratings?
-                    <br><strong>Solution:</strong> We built a <strong>Hybrid System</strong>.
-                    <br>1. Try <strong>KNN</strong> (Collaborative Filtering).
-                    <br>2. If no results, Fallback to <strong>TF-IDF</strong> (Content-Based) using product
-                    names/categories.
+                    <strong>The Hybrid Solution:</strong> We use a weighted combination of scores.
+                    <br>• <strong>Collaborative:</strong> User-item rating predictions (KNN).
+                    <br>• <strong>Content:</strong> Item similarity based on metadata (TF-IDF).
+                    <br><strong>Equation:</strong> <code>Score = 0.5·CF + 0.5·Content</code> (weights are configurable).
                 </div>
             </div>
 
             <div class="code-block">
-                <span class="keyword">def</span> <span class="function">hybrid_recommend</span>(product_id):
-                knn_recs = knn_recommend(product_id)
+                <span class="keyword">def</span> <span class="function">get_hybrid_recommendations</span>(product_id,
+                user_id):
+                cf_score = knn_model.predict(user_id, product_id)
+                content_score = tfidf_sim[product_id]
 
-                <span class="keyword">if</span> len(knn_recs) >= 3:
-                <span class="keyword">return</span> knn_recs <span class="comment"># High confidence</span>
-
-                <span class="keyword">return</span> tfidf_recommend(product_id) <span class="comment"># Fallback to Text
-                    matching</span>
+                <span class="keyword">return</span> (alpha * cf_score) + ((<span class="keyword">1</span> - alpha) *
+                content_score)
             </div>
         </div>
 

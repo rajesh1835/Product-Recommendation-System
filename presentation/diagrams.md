@@ -116,17 +116,15 @@ sequenceDiagram
     participant TFIDF as Content Engine
 
     U->>API: View Product "iPhone 13"
-    API->>KNN: Get Neighbors(iPhone 13)
     
-    alt KNN has Data (Warm Start)
-        KNN-->>API: Returns [Case, Charger, AirPods]
-    else KNN has No Data (Cold Start)
-        KNN-->>API: Returns Empty/Low Confidence
-        API->>TFIDF: Find Similar Text ("iPhone 13")
-        TFIDF-->>API: Returns [Samsung S21, Pixel 6]
+    par Parallel Score Calculation
+        API->>KNN: Predict Ratings (Collaborative)
+        API->>TFIDF: Calculate Cosine Similarity (Content)
     end
     
-    API-->>U: Show Top 6 Recommendations
+    API->>API: Weighted Combine: Score = α·CF + (1-α)·Content
+    
+    API-->>U: Show Top 6 Hybrid Recommendations
 ```
 
 ---

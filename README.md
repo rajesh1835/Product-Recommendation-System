@@ -1,6 +1,6 @@
-# 🛍️ E-Commerce Product Recommendation System
+# 🤖 SmartPic: Bridging User Interest and Product Content with Hybrid Machine Learning
 
-An AI-powered product recommendation system built with Python, Flask, and Machine Learning algorithms. This system provides personalized product suggestions using collaborative filtering techniques.
+An industrial-grade E-Commerce recommendation engine built with Python and Flask. This system delivers high-precision suggestions by merging **Collaborative Filtering** (User Behavior) and **Content-Based Filtering** (Product Metadata) into a powerful **Hybrid AI** model.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)
@@ -23,12 +23,14 @@ An AI-powered product recommendation system built with Python, Flask, and Machin
 ## ✨ Features
 
 - 🔐 **User Authentication** - Secure login/signup with Flask-Login
-- 🔍 **Product Search** - Fast search with SQLite database
-- 🎯 **Similar Products** - Category-based product recommendations
+- 🔍 **Product Search** - Fast search with MySQL and full-text matching
+- 🤖 **Hybrid AI Recommendations** - Combination of KNN collaborative filtering and TF-IDF content similarity
+- 🎯 **Smart Similarity** - Item-to-item suggestions based on both feature similarity and user preference history
 - 📊 **KPI Dashboard** - Real-time statistics and charts
 - 🌙 **Dark/Light Theme** - Modern UI with theme toggle
 - 📱 **Responsive Design** - Works on desktop and mobile
-- 🤖 **ML-Powered** - Collaborative filtering using Surprise library
+- 🤖 **ML-Powered** - Multi-model comparison (KNN, SVD, Baseline) using Scikit-Surprise library
+- ⚡ **Real-time Engine** - Dynamic hybrid scoring with α-weighted combination logic
 
 ## 🛠️ Tech Stack
 

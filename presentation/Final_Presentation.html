@@ -44,6 +44,7 @@
         .slide-title {
             background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             font-size: 2.8rem;
             font-weight: 700;
@@ -108,8 +109,8 @@
         }
 
         .title-slide h1 {
-            background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             font-size: 3.5rem;
         }
@@ -249,8 +250,8 @@
 
     <!-- SLIDE 1: Title -->
     <section class="slide title-slide">
-        <h1>🛒 E-Commerce Product Recommendation System</h1>
-        <h2>Personalized Product Recommendations using Machine Learning</h2>
+        <h1>🤖 SmartPic: Bridging User Interest and Product Content</h1>
+        <h2>Personalized Hybrid Recommendations using Collaborative & Content Filtering</h2>
         <p style="margin-top: 40px; color: #94a3b8;">
             <strong>Technology:</strong> Python | Surprise Library | Scikit-learn | Pandas<br>
             <strong>Algorithms:</strong> KNN, SVD, Collaborative Filtering, TF-IDF
@@ -344,7 +345,7 @@
 │   ┌─────────────────────────────────────────────────────────────────────┐  │
 │   │                      INFERENCE LAYER                                 │  │
 │   │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐         │  │
-│   │  │ KNN Recommender│  │TF-IDF Recommender│ │Hybrid Recommender│      │  │
+│   │  │ KNN Recommender│  │TF-IDF Recommender│ │Hybrid Engine (α)│      │  │
 │   │  └────────────────┘  └────────────────┘  └────────────────┘         │  │
 │   └─────────────────────────────────────────────────────────────────────┘  │
 │                             ▼                                               │
@@ -382,15 +383,13 @@
             </ul>
         </div>
 
-        <div class="algorithm-box">
-            <h3>3. Content-Based (TF-IDF)</h3>
-            <p>Uses product text features for similarity matching</p>
-            <ul>
-                <li>Combines: Product name + Category + Reviews</li>
-                <li>Max features: 5000 terms</li>
-                <li>Similarity: Cosine similarity on TF-IDF vectors</li>
-            </ul>
-        </div>
+        <h3>4. Hybrid Prediction Model</h3>
+        <p>Combines Collaborative and Content scores for robust suggestions</p>
+        <ul>
+            <li><strong>Hybrid Formula:</strong> Score = α·CF + (1-α)·Content</li>
+            <li><strong>Robustness:</strong> Solves cold-start using content similarity</li>
+            <li><strong>Weighting:</strong> Configurable α parameter (default 0.5)</li>
+        </ul>
         <div class="slide-number">4 / 12</div>
     </section>
 

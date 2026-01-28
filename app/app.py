@@ -1,7 +1,7 @@
 """
-Flask Web Application for Product Recommendation System
-Features: Product Search, Recommendations, KPI Dashboard
-MySQL Database Version
+SmartPic: Bridging User Interest and Product Content with Hybrid Machine Learning
+Flask Web Application for Advanced Product Recommendations
+Features: Hybrid AI Suggestions, Search, KPI Dashboard, MySQL
 """
 
 import os

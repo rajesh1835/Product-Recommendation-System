@@ -82,8 +82,22 @@
                             {% endif %}
                         </div>
                     </div>
-                    {% if product.similarity_score %}
-                    <div class="similarity-score">{{ (product.similarity_score * 100)|int }}% match</div>
+                    {% if product.rec_type or product.similarity_score %}
+                    <div class="rec-meta"
+                        style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        {% if product.rec_type %}
+                        <span class="badge badge-{{ product.rec_type }}">
+                            {% if product.rec_type == 'hybrid' %}🤖 Hybrid AI
+                            {% elif product.rec_type == 'content' %}📄 Content Match
+                            {% elif product.rec_type == 'collaborative' %}👥 Popular Choice
+                            {% else %}📁 Category{% endif %}
+                        </span>
+                        {% endif %}
+
+                        {% if product.similarity_score and product.similarity_score > 0 %}
+                        <span class="similarity-score">{{ (product.similarity_score * 100)|int }}% match</span>
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </div>
             </a>

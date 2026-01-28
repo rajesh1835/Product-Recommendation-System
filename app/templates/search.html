@@ -8,15 +8,17 @@
         <!-- Filters Sidebar -->
         <aside class="filters-sidebar">
             <h3>🔍 Filters</h3>
-            
+
             <form id="filterForm" action="{{ url_for('search') }}" method="GET" class="filter-form">
                 <!-- Price Range Filter -->
                 <div class="filter-group">
                     <label>Price Range (₹)</label>
                     <div class="price-range">
-                        <input type="number" name="min_price" placeholder="Min" value="{{ request.args.get('min_price', '') }}" class="filter-input">
+                        <input type="number" name="min_price" placeholder="Min"
+                            value="{{ request.args.get('min_price', '') }}" class="filter-input">
                         <span>to</span>
-                        <input type="number" name="max_price" placeholder="Max" value="{{ request.args.get('max_price', '') }}" class="filter-input">
+                        <input type="number" name="max_price" placeholder="Max"
+                            value="{{ request.args.get('max_price', '') }}" class="filter-input">
                     </div>
                 </div>
 
@@ -25,9 +27,12 @@
                     <label>Minimum Rating</label>
                     <select name="min_rating" class="filter-select">
                         <option value="">All Ratings</option>
-                        <option value="4.5" {% if request.args.get('min_rating') == '4.5' %}selected{% endif %}>⭐⭐⭐⭐⭐ (4.5+)</option>
-                        <option value="4" {% if request.args.get('min_rating') == '4' %}selected{% endif %}>⭐⭐⭐⭐ (4.0+)</option>
-                        <option value="3" {% if request.args.get('min_rating') == '3' %}selected{% endif %}>⭐⭐⭐ (3.0+)</option>
+                        <option value="4.5" {% if request.args.get('min_rating')=='4.5' %}selected{% endif %}>⭐⭐⭐⭐⭐
+                            (4.5+)</option>
+                        <option value="4" {% if request.args.get('min_rating')=='4' %}selected{% endif %}>⭐⭐⭐⭐ (4.0+)
+                        </option>
+                        <option value="3" {% if request.args.get('min_rating')=='3' %}selected{% endif %}>⭐⭐⭐ (3.0+)
+                        </option>
                     </select>
                 </div>
 
@@ -62,11 +67,24 @@
                 <div class="suggestions-grid">
                     {% for product in suggestions %}
                     <div class="suggestion-card">
-                        <img src="{{ product.image }}" alt="{{ product.name }}" onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
+                        <img src="{{ product.image }}" alt="{{ product.name }}"
+                            onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
                         <h4>{{ product.name[:40] }}...</h4>
                         <p>⭐ {{ product.ratings }}</p>
                         <p class="price">₹{{ "{:,.0f}".format(product.discount_price) }}</p>
-                        <a href="{{ url_for('product_detail', product_id=product.product_id) }}" class="btn-small">View</a>
+                        {% if product.rec_type %}
+                        <div style="margin-top: 5px;">
+                            <span class="badge badge-{{ product.rec_type }}"
+                                style="font-size: 0.6rem; padding: 1px 4px;">
+                                {% if product.rec_type == 'hybrid' %}🤖 Hybrid
+                                {% elif product.rec_type == 'content' %}📄 Content
+                                {% elif product.rec_type == 'collaborative' %}👥 Popular
+                                {% else %}📁 Category{% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        <a href="{{ url_for('product_detail', product_id=product.product_id) }}"
+                            class="btn-small">View</a>
                     </div>
                     {% endfor %}
                 </div>
@@ -86,7 +104,8 @@
                         {% endif %}
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</h3>
+                        <h3 class="product-name">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}
+                        </h3>
                         <p class="product-category">{{ product.main_category }}</p>
                         {% if product.sub_category %}
                         <p class="product-subcategory">{{ product.sub_category }}</p>
@@ -101,7 +120,10 @@
                             {% endif %}
                             <span class="product-price">₹{{ "{:,.0f}".format(product.discount_price) }}</span>
                             {% if product.actual_price and product.actual_price > 0 %}
-                            <span class="discount-badge" style="background: #e74c3c; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; margin-left: 0.3rem;">-{{ "%.0f"|format(((product.actual_price - product.discount_price) / product.actual_price) * 100) }}%</span>
+                            <span class="discount-badge"
+                                style="background: #e74c3c; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; margin-left: 0.3rem;">-{{
+                                "%.0f"|format(((product.actual_price - product.discount_price) / product.actual_price) *
+                                100) }}%</span>
                             {% endif %}
                         </div>
                     </div>
@@ -123,9 +145,10 @@
 </div>
 
 <script>
-function downloadCSV() {
-    const results = {{ results|tojson }};
-    if (!results || results.length === 0) {
+    function downloadCSV() {
+        const results_data = {{ results| tojson
+    }};
+    if (!results_data || results_data.length === 0) {
         alert('No results to download');
         return;
     }
@@ -146,10 +169,10 @@ function downloadCSV() {
     csv += `"Price Range","${minPrice || '0'} - ${maxPrice || 'Any'}"\n`;
     csv += `"Minimum Rating","${minRating || 'All'}"\n`;
     csv += `"Downloaded","${new Date().toLocaleString()}"\n\n`;
-    
+
     csv += 'Product ID,Name,Category,Sub Category,Rating,No of Ratings,Original Price,Discount Price,Image Link\n';
-    
-    results.forEach(product => {
+
+    results_data.forEach(product => {
         csv += `"${product.ProductId}","${product.name.replace(/"/g, '""')}","${product.main_category}","${product.sub_category || ''}",${product.ratings},${product.no_of_ratings},${product.actual_price || ''},${product.discount_price},"${product.image || ''}"\n`;
     });
 
@@ -165,371 +188,371 @@ function downloadCSV() {
     document.body.removeChild(a);
 }
 
-function toggleSuggestions() {
-    const section = document.getElementById('suggestionsSection');
-    section.style.display = section.style.display === 'none' ? 'block' : 'none';
-}
+    function toggleSuggestions() {
+        const section = document.getElementById('suggestionsSection');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
 </script>
 
 <style>
-.search-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem;
-}
+    .search-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
 
-.search-layout {
-    display: grid;
-    grid-template-columns: 250px 1fr;
-    gap: 2rem;
-}
-
-.filters-sidebar {
-    background: var(--bg-card);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    height: fit-content;
-    position: sticky;
-    top: 20px;
-}
-
-.filters-sidebar h3 {
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-    color: var(--text-primary);
-}
-
-.filter-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.filter-group label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-
-.filter-input,
-.filter-select {
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.9rem;
-    background: var(--bg-input);
-    color: var(--text-primary);
-    transition: all 0.3s;
-}
-
-.filter-input::placeholder {
-    color: var(--text-secondary);
-}
-
-.filter-input:focus,
-.filter-select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.price-range {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.price-range input {
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    width: 100%;
-    background: var(--bg-input);
-    color: var(--text-primary);
-    font-size: 0.9rem;
-}
-
-.price-range span {
-    color: var(--text-primary);
-    font-weight: 600;
-    text-align: center;
-}
-
-.filter-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.btn-primary,
-.btn-secondary {
-    padding: 0.75rem 1rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-size: 0.9rem;
-}
-
-.btn-primary {
-    background: var(--accent);
-    color: white;
-    flex: 1;
-}
-
-.btn-primary:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-    flex: 1;
-}
-
-.btn-secondary:hover {
-    background: var(--border);
-}
-
-.search-results {
-    min-height: 500px;
-}
-
-.results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.results-header h2 {
-    font-size: 1.5rem;
-    color: var(--text-primary);
-}
-
-.query-highlight {
-    color: var(--accent);
-}
-
-.results-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.btn-download,
-.btn-suggest {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    background: var(--accent);
-    color: white;
-}
-
-.btn-download:hover,
-.btn-suggest:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
-}
-
-.results-count {
-    color: var(--text-secondary);
-    margin-bottom: 1.5rem;
-}
-
-.suggestions-section {
-    background: var(--bg-card);
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    border: 2px dashed var(--primary);
-}
-
-.suggestions-section h3 {
-    margin-bottom: 1.5rem;
-    color: var(--primary);
-}
-
-.suggestions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-}
-
-.suggestion-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 8px;
-    text-align: center;
-    border: 1px solid var(--border);
-    transition: all 0.3s;
-}
-
-.suggestion-card:hover {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.suggestion-card img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
-}
-
-.suggestion-card h4 {
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
-}
-
-.suggestion-card p {
-    font-size: 0.85rem;
-    margin: 0.25rem 0;
-}
-
-.suggestion-card .price {
-    color: var(--primary);
-    font-weight: 600;
-}
-
-.btn-small {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background: var(--primary);
-    color: white;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-}
-
-.results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.product-card {
-    background: var(--bg-card);
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.product-image {
-    width: 100%;
-    height: 180px;
-    overflow: hidden;
-}
-
-.product-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.product-info {
-    padding: 1rem;
-}
-
-.product-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.product-category {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.25rem;
-}
-
-.product-subcategory {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.product-meta {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.product-rating {
-    color: var(--accent);
-    font-weight: 600;
-}
-
-.product-reviews {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-}
-
-.price-info {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.original-price {
-    text-decoration: line-through;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-}
-
-.product-price {
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.no-results {
-    text-align: center;
-    padding: 3rem 2rem;
-    color: var(--text-secondary);
-}
-
-@media (max-width: 768px) {
     .search-layout {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 2rem;
     }
 
     .filters-sidebar {
-        position: static;
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+    }
+
+    .filters-sidebar h3 {
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+    }
+
+    .filter-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+
+    .filter-input,
+    .filter-select {
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: var(--bg-input);
+        color: var(--text-primary);
+        transition: all 0.3s;
+    }
+
+    .filter-input::placeholder {
+        color: var(--text-secondary);
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .price-range {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .price-range input {
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        width: 100%;
+        background: var(--bg-input);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .price-range span {
+        color: var(--text-primary);
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+        flex: 1;
+    }
+
+    .btn-secondary:hover {
+        background: var(--border);
+    }
+
+    .search-results {
+        min-height: 500px;
     }
 
     .results-header {
-        flex-direction: column;
-        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .results-header h2 {
+        font-size: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .query-highlight {
+        color: var(--accent);
     }
 
     .results-actions {
-        width: 100%;
+        display: flex;
+        gap: 1rem;
     }
-}
+
+    .btn-download,
+    .btn-suggest {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: var(--accent);
+        color: white;
+    }
+
+    .btn-download:hover,
+    .btn-suggest:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+    }
+
+    .results-count {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .suggestions-section {
+        background: var(--bg-card);
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        border: 2px dashed var(--primary);
+    }
+
+    .suggestions-section h3 {
+        margin-bottom: 1.5rem;
+        color: var(--primary);
+    }
+
+    .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .suggestion-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--border);
+        transition: all 0.3s;
+    }
+
+    .suggestion-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .suggestion-card img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+    }
+
+    .suggestion-card h4 {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .suggestion-card p {
+        font-size: 0.85rem;
+        margin: 0.25rem 0;
+    }
+
+    .suggestion-card .price {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .btn-small {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .product-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-image {
+        width: 100%;
+        height: 180px;
+        overflow: hidden;
+    }
+
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-info {
+        padding: 1rem;
+    }
+
+    .product-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .product-category {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.25rem;
+    }
+
+    .product-subcategory {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .product-meta {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-rating {
+        color: var(--accent);
+        font-weight: 600;
+    }
+
+    .product-reviews {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .price-info {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .original-price {
+        text-decoration: line-through;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .product-price {
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+        .search-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-sidebar {
+            position: static;
+        }
+
+        .results-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .results-actions {
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}
