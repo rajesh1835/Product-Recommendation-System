@@ -180,6 +180,21 @@ Four collaborative filtering models are compared:
 
 **Best Model:** KNNBasic with cosine similarity
 
+## 📄 Research Paper
+
+A comprehensive IEEE-standard research paper documenting the system architecture, methodology, and experimental results is available:
+
+- [View Research Paper (HTML)](presentation/Research/IEEE_Research_Paper.html)
+- [View Research Paper (PDF Source)](presentation/Research/IEEE_Research_Paper.tex)
+- [View Research Paper (Markdown)](presentation/Research/IEEE_Research_Paper.md)
+
+## 🎤 Presentation
+
+A professional slide deck summarizing the project, methodology, and results is available:
+
+- [View Final Presentation (Slides)](presentation/Final_Presentation.html)
+- [View System Diagrams](presentation/diagrams/system_diagrams.html)
+
 ## 📡 API Endpoints
 
 | Endpoint | Method | Description |

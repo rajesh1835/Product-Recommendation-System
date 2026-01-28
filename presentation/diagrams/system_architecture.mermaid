@@ -1,0 +1,35 @@
+graph TB
+    subgraph "Client Layer"
+        Browser[Web Browser]
+    end
+
+    subgraph "Application Layer"
+        Flask[Flask Web Server]
+        Auth[Auth Module]
+        Routes[API Routes]
+        RecEngine[Recommendation Engine]
+    end
+
+    subgraph "Data Layer"
+        MySQL[(MySQL Database)]
+        ModelStore[Model Storage]
+    end
+
+    subgraph "ML Pipeline"
+        DataLoad[Data Loader]
+        Preprocess[Preprocessing]
+        Train[Model Training]
+        Eval[Evaluation]
+    end
+
+    Browser -- "HTTP Requests" --> Flask
+    Flask -- "Authentication" --> Auth
+    Flask -- "Routing" --> Routes
+    Routes -- "Query Data" --> MySQL
+    Routes -- "Get Recommendations" --> RecEngine
+    RecEngine -- "Load Model" --> ModelStore
+    
+    DataLoad -- "Raw Data" --> Preprocess
+    Preprocess -- "Clean Data" --> Train
+    Train -- "Trained Model" --> ModelStore
+    Train -- "Metrics" --> Eval

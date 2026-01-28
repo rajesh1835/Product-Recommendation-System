@@ -1,10 +1,59 @@
-# System Diagrams
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Diagrams - Product Recommendation System</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .diagram-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            padding: 20px;
+            overflow: auto;
+        }
+        .diagram-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #34495e;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>System Architecture & Design Diagrams</h1>
 
-The following diagrams illustrate the architecture, workflow, and use cases of the Product Recommendation System.
-
-## 1. System Architecture
-
-```mermaid
+        <div class="diagram-card">
+            <div class="diagram-title">1. System Architecture</div>
+            <div class="mermaid">
 graph TB
     subgraph "Client Layer"
         Browser[Web Browser]
@@ -40,11 +89,12 @@ graph TB
     Preprocess -- "Clean Data" --> Train
     Train -- "Trained Model" --> ModelStore
     Train -- "Metrics" --> Eval
-```
+            </div>
+        </div>
 
-## 2. Workflow Diagram
-
-```mermaid
+        <div class="diagram-card">
+            <div class="diagram-title">2. Workflow Diagram</div>
+            <div class="mermaid">
 sequenceDiagram
     participant User
     participant Frontend
@@ -71,11 +121,12 @@ sequenceDiagram
     Backend->>RecModel: Get Recommendations(id)
     RecModel-->>Backend: List of Similar Products
     Backend-->>Frontend: Render Product Page with Recs
-```
+            </div>
+        </div>
 
-## 3. Use Case Diagram
-
-```mermaid
+        <div class="diagram-card">
+            <div class="diagram-title">3. Use Case Diagram</div>
+            <div class="mermaid">
 usecaseDiagram
     actor "Registered User" as User
     actor "System Admin" as Admin
@@ -101,57 +152,8 @@ usecaseDiagram
     Admin --> UC5
     Admin --> UC7
     Admin --> UC8
-```
-
----
-
-## 4. Sequence Diagram (User Request)
-**Description:** What happens precisely when a user asks for a recommendation.
-
-```mermaid
-sequenceDiagram
-    actor U as User
-    participant API as Recommender System
-    participant KNN as KNN Model
-    participant TFIDF as Content Engine
-
-    U->>API: View Product "iPhone 13"
-    API->>KNN: Get Neighbors(iPhone 13)
-    
-    alt KNN has Data (Warm Start)
-        KNN-->>API: Returns [Case, Charger, AirPods]
-    else KNN has No Data (Cold Start)
-        KNN-->>API: Returns Empty/Low Confidence
-        API->>TFIDF: Find Similar Text ("iPhone 13")
-        TFIDF-->>API: Returns [Samsung S21, Pixel 6]
-    end
-    
-    API-->>U: Show Top 6 Recommendations
-```
-
----
-
-## 5. Model Selection Logic (The Tournament)
-**Description:** How the system decides which model is best.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Train_Baseline
-    [*] --> Train_KNNBasic
-    [*] --> Train_SVD
-    [*] --> Train_KNNWithMeans
-
-    Train_Baseline --> Calculate_RMSE
-    Train_KNNBasic --> Calculate_RMSE
-    Train_SVD --> Calculate_RMSE
-    Train_KNNWithMeans --> Calculate_RMSE
-
-    Calculate_RMSE --> Compare_Scores
-    
-    state "Select Best Model" as Select
-    
-    Compare_Scores --> Select: Lowest Error Wins
-    
-    Select --> Save_Artifacts
-    Save_Artifacts --> [*]
-```
+            </div>
+        </div>
+    </div>
+</body>
+</html>

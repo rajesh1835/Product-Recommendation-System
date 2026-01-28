@@ -1,4 +1,7 @@
 # Personalized Product Recommendation System for E-Commerce Platforms Using Collaborative Filtering
+**Tarigonda Rajesh**  
+*Department of Computer Science*  
+Email: rajeshtarigonda@example.com
 
 ---
 
@@ -273,15 +276,27 @@ The system provides multiple recommendation types:
 ## VI. Exploratory Data Analysis
 
 ### A. Data Visualizations
-
-Comprehensive EDA was performed including:
-
-1. **Category Distribution**: Analysis of product categories
-2. **Ratings Distribution**: User rating patterns
-3. **Correlation Matrix**: Feature relationships
-4. **Price Analysis**: Price distribution across categories
-5. **Popularity Distribution**: Product popularity patterns
-6. **Top Products per Category**: Best-rated items
+ 
+ Comprehensive EDA was performed including:
+ 
+ 1. **Category Distribution**: Analysis of product categories
+ 
+ ![Category Distribution](../../artifacts/eda/category_distribution.png)
+ 
+ 2. **Ratings Distribution**: User rating patterns
+ 
+ ![Ratings Distribution](../../artifacts/eda/ratings_distribution.png)
+ 
+ 3. **Correlation Matrix**: Feature relationships
+ 
+ ![Correlation Matrix](../../artifacts/eda/correlation_matrix.png)
+ 
+ 4. **Price Analysis**: Price distribution across categories
+ 5. **Popularity Distribution**: Product popularity patterns
+ 
+ ![Ratings vs Popularity](../../artifacts/eda/ratings_vs_popularity.png)
+ 
+ 6. **Top Products per Category**: Best-rated items
 
 ### B. Key Insights
 
