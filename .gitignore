@@ -56,6 +56,7 @@ notebooks/
 
 #presentation
 presentation/diagrams/
+presentation/diagrams/system_architecture.mermaid
 
 #report
 report

@@ -1,35 +1,61 @@
 graph TB
+    %% Styles
+    classDef client fill:#e0f2fe,stroke:#0284c7,stroke-width:2px;
+    classDef app fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+    classDef ml fill:#f3e8ff,stroke:#9333ea,stroke-width:2px;
+    classDef data fill:#ffedd5,stroke:#ea580c,stroke-width:2px;
+
     subgraph "Client Layer"
-        Browser[Web Browser]
+        Browser[Web Browser / UI]:::client
     end
 
-    subgraph "Application Layer"
-        Flask[Flask Web Server]
-        Auth[Auth Module]
-        Routes[API Routes]
-        RecEngine[Recommendation Engine]
+    subgraph "Application Layer (Flask)"
+        Flask[Flask Web Server]:::app
+        Auth[Auth Manager\n(Flask-Login)]:::app
+        Search[Search Module]:::app
+        RecEngine[Recommendation Engine]:::app
+        Dashboard[Dashboard Controller]:::app
     end
 
-    subgraph "Data Layer"
-        MySQL[(MySQL Database)]
-        ModelStore[Model Storage]
+    subgraph "ML Pipeline (Offline)"
+        direction TB
+        Loader[Data Loader\n(CSVs + Reviews)]:::ml
+        Combiner[Data Combiner]:::ml
+        Cleaner[Data Cleaner]:::ml
+        Sampler[Data Sampler]:::ml
+        EDA[EDA Module]:::ml
+        Trainer[Model Trainer]:::ml
+        ABTest[A/B Testing]:::ml
     end
 
-    subgraph "ML Pipeline"
-        DataLoad[Data Loader]
-        Preprocess[Preprocessing]
-        Train[Model Training]
-        Eval[Evaluation]
+    subgraph "Data Storage"
+        MySQL[(MySQL/SQLite DB)]:::data
+        Artifacts[Artifact Store\n(.pkl models, .json config)]:::data
+        RawData[Raw CSV Files]:::data
     end
 
-    Browser -- "HTTP Requests" --> Flask
-    Flask -- "Authentication" --> Auth
-    Flask -- "Routing" --> Routes
-    Routes -- "Query Data" --> MySQL
-    Routes -- "Get Recommendations" --> RecEngine
-    RecEngine -- "Load Model" --> ModelStore
-    
-    DataLoad -- "Raw Data" --> Preprocess
-    Preprocess -- "Clean Data" --> Train
-    Train -- "Trained Model" --> ModelStore
-    Train -- "Metrics" --> Eval
+    %% Client Interactions
+    Browser -- "Login/Signup" --> Auth
+    Browser -- "Search Products" --> Search
+    Browser -- "View Dashboard" --> Dashboard
+    Browser -- "View Product" --> RecEngine
+
+    %% App Layer Interactions
+    Auth -- "Verify Creds" --> MySQL
+    Search -- "Query Products" --> MySQL
+    Dashboard -- "Fetch Stats" --> MySQL
+    RecEngine -- "Fetch Metadata" --> MySQL
+    RecEngine -- "Load Model" --> Artifacts
+
+    %% ML Pipeline Flow
+    RawData --> Loader
+    Loader --> Combiner
+    Combiner --> Cleaner
+    Cleaner --> Sampler
+    Sampler --> EDA
+    Sampler --> Trainer
+    Trainer -- "Train Models\n(KNN, SVD)" --> Artifacts
+    Trainer -- "Evaluate" --> ABTest
+
+    %% Logic
+    RecEngine -- "Hybrid Strategy" --> Search

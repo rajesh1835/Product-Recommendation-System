@@ -59,11 +59,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 5000);
     });
 
-    // Initialize charts if on dashboard
-    if (document.getElementById('categoryChart')) {
-        initCharts();
-    }
-
     // Lazy Load Images
     const images = document.querySelectorAll('img[data-src]');
     const imageObserver = new IntersectionObserver((entries, observer) => {
@@ -78,83 +73,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     images.forEach(img => imageObserver.observe(img));
 });
-
-// Initialize Charts
-function initCharts() {
-    fetch('/api/stats')
-        .then(response => response.json())
-        .then(data => {
-            const theme = document.documentElement.getAttribute('data-theme');
-            const textColor = theme === 'dark' ? '#eaeaea' : '#1a1a2e';
-            const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-
-            // Category Chart
-            const ctxCat = document.getElementById('categoryChart').getContext('2d');
-            window.categoryChart = new Chart(ctxCat, {
-                type: 'bar',
-                data: {
-                    labels: data.categories.map(c => c.main_category),
-                    datasets: [{
-                        label: 'Products per Category',
-                        data: data.categories.map(c => c.count),
-                        backgroundColor: '#6366f1',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: textColor } }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: gridColor },
-                            ticks: { color: textColor }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: textColor }
-                        }
-                    }
-                }
-            });
-
-            // Rating Chart
-            const ctxRate = document.getElementById('ratingChart').getContext('2d');
-            window.ratingChart = new Chart(ctxRate, {
-                type: 'line',
-                data: {
-                    labels: data.ratings.map(r => r.rating_bin + ' Stars'),
-                    datasets: [{
-                        label: 'Distribution',
-                        data: data.ratings.map(r => r.count),
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { labels: { color: textColor } }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: gridColor },
-                            ticks: { color: textColor }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: textColor }
-                        }
-                    }
-                }
-            });
-        });
-}
 
 // Live Search (AJAX)
 function liveSearch(query) {

@@ -6,8 +6,10 @@ Features: Hybrid AI Suggestions, Search, KPI Dashboard, MySQL
 
 import os
 import sys
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+import io
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file, make_response
 import pandas as pd
+from fpdf import FPDF
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -73,11 +75,15 @@ def get_products_from_db(limit=None):
     products = query.all()
     return [{'id': p.id, 'name': p.name, 'category': p.category, 'price': p.price, 'rating': p.rating} for p in products]
 
-def search_products_db(query_text, limit=20):
-    """Search products in MySQL database"""
+def search_products_db(query_text, limit=30):
+    """Search products in MySQL database with improved relevance"""
     results = Product.query.filter(
         Product.name.ilike(f'%{query_text}%') | 
-        Product.main_category.ilike(f'%{query_text}%')
+        Product.main_category.ilike(f'%{query_text}%') |
+        Product.sub_category.ilike(f'%{query_text}%')
+    ).order_by(
+        # Weighted sorting: prioritize higher star ratings with more reviews
+        (Product.ratings * Product.no_of_ratings).desc()
     ).limit(limit).all()
     return results
 
@@ -130,24 +136,23 @@ def signup():
             flash('Password must be at least 6 characters', 'error')
             return redirect(url_for('signup'))
         
-        with app.app_context():
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user:
-                flash('Username already exists', 'error')
-                return redirect(url_for('signup'))
-            
-            existing_email = User.query.filter_by(email=email).first()
-            if existing_email:
-                flash('Email already registered', 'error')
-                return redirect(url_for('signup'))
-            
-            user = User(username=username, email=email)
-            user.set_password(password)
-            db.session.add(user)
-            db.session.commit()
-            
-            flash('Account created successfully! Please log in.', 'success')
-            return redirect(url_for('login'))
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists', 'error')
+            return redirect(url_for('signup'))
+        
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            flash('Email already registered', 'error')
+            return redirect(url_for('signup'))
+        
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Account created successfully! Please log in.', 'success')
+        return redirect(url_for('login'))
     
     return render_template('signup.html')
 
@@ -186,19 +191,18 @@ def logout():
 # -----------------------------
 def get_kpi_data():
     """Get KPI metrics from database"""
-    with app.app_context():
-        total_products = Product.query.count()
-        avg_rating = db.session.query(db.func.avg(Product.ratings)).scalar() or 0
-        avg_price = db.session.query(db.func.avg(Product.discount_price)).scalar() or 0
-        categories = db.session.query(db.func.count(db.distinct(Product.main_category))).scalar() or 0
-        
-        return {
-            'total_products': total_products,
-            'avg_rating': round(avg_rating, 2),
-            'avg_price': round(avg_price, 2),
-            'total_categories': categories,
-            'categories': categories
-        }
+    total_products = Product.query.count()
+    avg_rating = db.session.query(db.func.avg(Product.ratings)).scalar() or 0
+    avg_price = db.session.query(db.func.avg(Product.discount_price)).scalar() or 0
+    categories = db.session.query(db.func.count(db.distinct(Product.main_category))).scalar() or 0
+    
+    return {
+        'total_products': total_products,
+        'avg_rating': round(avg_rating, 2),
+        'avg_price': round(avg_price, 2),
+        'total_categories': categories,
+        'categories': categories
+    }
 
 # -----------------------------
 # ROUTES - HOME
@@ -229,9 +233,9 @@ def dashboard():
     from datetime import date, timedelta
     import threading
     
-    with app.app_context():
-        # Track page view asynchronously (don't wait for it)
-        def track_visit():
+    # Track page view asynchronously (don't wait for it)
+    def track_visit():
+        with app.app_context():
             try:
                 today = date.today()
                 page_view = PageView.query.filter_by(page_name='dashboard', date=today).first()
@@ -243,101 +247,138 @@ def dashboard():
                 db.session.commit()
             except:
                 pass
-        
-        threading.Thread(target=track_visit, daemon=True).start()
-        
-        # Execute all product queries together for efficiency
-        popular = Product.query.order_by(Product.ratings.desc()).limit(6).all()
-        top_categories = db.session.query(
-            Product.main_category,
-            db.func.count(Product.id).label('count'),
-            db.func.avg(Product.ratings).label('avg_rating')
-        ).group_by(Product.main_category).order_by(db.func.count(Product.id).desc()).limit(5).all()
-        
-        top_rated = Product.query.filter(Product.ratings > 0).order_by(Product.ratings.desc()).limit(5).all()
-        best_deals = Product.query.filter(
-            (Product.actual_price - Product.discount_price) > 0
-        ).order_by((Product.actual_price - Product.discount_price).desc()).limit(5).all()
-        
-        # Get KPI data
-        kpi = get_kpi_data()
-        
-        # Cache analytics or use simpler queries
-        last_week = date.today() - timedelta(days=7)
-        
-        # Get aggregated totals with separate queries to avoid cartesian product
-        total_visitors = db.session.query(db.func.sum(PageView.visit_count)).scalar() or 0
-        total_recommendations = db.session.query(db.func.sum(Recommendation.recommendation_count)).scalar() or 0
-        
-        # Get last 7 days with simpler queries
-        daily_visitors = db.session.query(
-            PageView.date,
-            db.func.sum(PageView.visit_count).label('count')
-        ).filter(PageView.date >= last_week).group_by(PageView.date).order_by(PageView.date).all()
-        
-        daily_recommendations = db.session.query(
-            Recommendation.date,
-            db.func.sum(Recommendation.recommendation_count).label('count')
-        ).filter(Recommendation.date >= last_week).group_by(Recommendation.date).order_by(Recommendation.date).all()
-        
-        # Convert to chart data efficiently
-        visitors_chart_data = {
-            'dates': [str(v[0]) for v in daily_visitors],
-            'counts': [v[1] or 0 for v in daily_visitors]
-        }
-        
-        recommendations_chart_data = {
-            'dates': [str(r[0]) for r in daily_recommendations],
-            'counts': [r[1] or 0 for r in daily_recommendations]
-        }
-        
-        # Build response data
-        popular_data = [{
-            'ProductId': p.product_id, 
-            'name': p.name, 
-            'price': p.discount_price, 
-            'rating': p.ratings,
-            'main_category': p.main_category,
-            'ratings': p.ratings,
-            'discount_price': p.discount_price,
-            'image': p.image
-        } for p in popular]
-        
-        categories_data = [{
-            'name': cat[0],
-            'count': cat[1],
-            'avg_rating': round(cat[2], 2) if cat[2] else 0
-        } for cat in top_categories]
-        
-        top_rated_data = [{
-            'ProductId': p.product_id,
-            'name': p.name,
-            'rating': p.ratings,
-            'no_of_ratings': p.no_of_ratings,
-            'image': p.image
-        } for p in top_rated]
-        
-        best_deals_data = [{
-            'ProductId': p.product_id,
-            'name': p.name,
-            'original_price': p.actual_price,
-            'discount_price': p.discount_price,
-            'savings': round(p.actual_price - p.discount_price, 2),
-            'discount_pct': round(((p.actual_price - p.discount_price) / p.actual_price * 100)) if p.actual_price > 0 else 0,
-            'image': p.image
-        } for p in best_deals]
-        
-        return render_template('dashboard.html', 
-                             popular=popular_data, 
-                             kpi=kpi,
-                             categories=categories_data,
-                             top_rated=top_rated_data,
-                             best_deals=best_deals_data,
-                             username=session.get('username', 'Guest'),
-                             total_visitors=total_visitors,
-                             total_recommendations=total_recommendations,
-                             visitors_chart_data=visitors_chart_data,
-                             recommendations_chart_data=recommendations_chart_data)
+    
+    threading.Thread(target=track_visit, daemon=True).start()
+    
+    # Execute all product queries together for efficiency
+    # Popular = Most reviewed (Highest engagement)
+    popular = Product.query.order_by(Product.no_of_ratings.desc()).limit(6).all()
+    
+    # Top Categories = Categories with most total reviews (indicates high traffic area)
+    top_categories = db.session.query(
+        Product.main_category,
+        db.func.count(Product.id).label('count'),
+        db.func.avg(Product.ratings).label('avg_rating'),
+        db.func.sum(Product.no_of_ratings).label('total_reviews')
+    ).group_by(Product.main_category).order_by(db.func.sum(Product.no_of_ratings).desc()).limit(5).all()
+    
+    # Top Rated = Highest stars (minimum 10 reviews to ensure reliability)
+    top_rated = Product.query.filter(Product.no_of_ratings >= 10).order_by(Product.ratings.desc()).limit(5).all()
+    
+    best_deals = Product.query.filter(
+        (Product.actual_price - Product.discount_price) > 0
+    ).order_by((Product.actual_price - Product.discount_price).desc()).limit(5).all()
+    
+    # Get KPI data
+    kpi = get_kpi_data()
+    
+    # Cache analytics or use simpler queries
+    last_week = date.today() - timedelta(days=7)
+    
+    # Get aggregated totals with separate queries to avoid cartesian product
+    total_visitors = db.session.query(db.func.sum(PageView.visit_count)).scalar() or 0
+    total_recommendations = db.session.query(db.func.sum(Recommendation.recommendation_count)).scalar() or 0
+    
+    # Category Distribution Data (for Pie/Doughnut Chart)
+    category_dist = db.session.query(
+        Product.main_category, 
+        db.func.count(Product.id)
+    ).group_by(Product.main_category).all()
+    
+    category_chart_data = {
+        'labels': [c[0] if c[0] else 'Uncategorized' for c in category_dist],
+        'counts': [c[1] for c in category_dist]
+    }
+    
+    # Rating Distribution (for Bar Chart)
+    # Group by floor of ratings to get 0, 1, 2, 3, 4, 5 bins
+    rating_dist = db.session.query(
+        db.func.floor(Product.ratings).label('rating_bin'),
+        db.func.count(Product.id)
+    ).group_by(db.func.floor(Product.ratings)).order_by('rating_bin').all()
+    
+    # Initialize all bins 0-5
+    bins = {float(i): 0 for i in range(6)}
+    for r in rating_dist:
+        if r[0] is not None:
+            bins[float(r[0])] = r[1]
+            
+    rating_dist_data = {
+        'labels': [f"{int(k)} Stars" for k in sorted(bins.keys())],
+        'counts': [bins[k] for k in sorted(bins.keys())]
+    }
+
+    # Get last 7 days with simpler queries
+    daily_visitors = db.session.query(
+        PageView.date,
+        db.func.sum(PageView.visit_count).label('count')
+    ).filter(PageView.date >= last_week).group_by(PageView.date).order_by(PageView.date).all()
+    
+    daily_recommendations = db.session.query(
+        Recommendation.date,
+        db.func.sum(Recommendation.recommendation_count).label('count')
+    ).filter(Recommendation.date >= last_week).group_by(Recommendation.date).order_by(Recommendation.date).all()
+    
+    # Convert to chart data efficiently
+    visitors_chart_data = {
+        'dates': [str(v[0]) for v in daily_visitors],
+        'counts': [v[1] or 0 for v in daily_visitors]
+    }
+    
+    recommendations_chart_data = {
+        'dates': [str(r[0]) for r in daily_recommendations],
+        'counts': [r[1] or 0 for r in daily_recommendations]
+    }
+    
+    # Build response data
+    popular_data = [{
+        'ProductId': p.product_id, 
+        'name': p.name, 
+        'price': p.discount_price, 
+        'rating': p.ratings,
+        'main_category': p.main_category,
+        'ratings': p.ratings,
+        'discount_price': p.discount_price,
+        'image': p.image
+    } for p in popular]
+    
+    categories_data = [{
+        'name': cat[0],
+        'count': cat[1],
+        'avg_rating': round(cat[2], 2) if cat[2] else 0
+    } for cat in top_categories]
+    
+    top_rated_data = [{
+        'ProductId': p.product_id,
+        'name': p.name,
+        'rating': p.ratings,
+        'no_of_ratings': p.no_of_ratings,
+        'image': p.image
+    } for p in top_rated]
+    
+    best_deals_data = [{
+        'ProductId': p.product_id,
+        'name': p.name,
+        'original_price': p.actual_price,
+        'discount_price': p.discount_price,
+        'savings': round(p.actual_price - p.discount_price, 2),
+        'discount_pct': round(((p.actual_price - p.discount_price) / p.actual_price * 100)) if p.actual_price > 0 else 0,
+        'image': p.image
+    } for p in best_deals]
+    
+    return render_template('dashboard.html', 
+                         popular=popular_data, 
+                         kpi=kpi,
+                         categories=categories_data,
+                         top_rated=top_rated_data,
+                         best_deals=best_deals_data,
+                         username=session.get('username', 'Guest'),
+                         total_visitors=total_visitors,
+                         total_recommendations=total_recommendations,
+                         visitors_chart_data=visitors_chart_data,
+                         recommendations_chart_data=recommendations_chart_data,
+                         category_chart_data=category_chart_data,
+                         rating_dist_data=rating_dist_data)
 
 # -----------------------------
 # ROUTES - SEARCH WITH FILTERS
@@ -388,19 +429,36 @@ def search():
         if min_rating:
             results_query = results_query.filter(Product.ratings >= min_rating)
         
-        results = results_query.order_by(Product.ratings.desc()).limit(50).all()
+        # Consistent weighted sorting for search
+        results = results_query.order_by((Product.ratings * Product.no_of_ratings).desc()).limit(50).all()
         
-        # Get suggestions based on top categories in results
-        suggestions = []
+        # Track search activity for analytics
+        from src.components.database import PageView
+        from datetime import date
+        today = date.today()
+        page_view = PageView.query.filter_by(page_name='search', date=today).first()
+        if page_view:
+            page_view.visit_count += 1
+        else:
+            page_view = PageView(page_name='search', visit_count=1, date=today)
+        db.session.add(page_view)
+        # We don't need a manual commit here if we follow Flask-SQLAlchemy's session lifecycle,
+        # but the project seems to use manual commits.
+        db.session.commit()
+        
+        # Build related products from top categories
+        related = []
         if results:
             top_cats = set([p.main_category for p in results[:5]])
             for cat in top_cats:
-                suggestions.extend(
+                related.extend(
                     Product.query.filter(
                         Product.main_category == cat,
-                        ~Product.id.in_([p.id for p in results])
+                        ~Product.product_id.in_([p.product_id for p in results])
                     ).order_by(Product.ratings.desc()).limit(3).all()
                 )
+        
+        # Skip similar products per request; only related products shown
         
         results_list = [{
             'ProductId': p.product_id, 
@@ -415,24 +473,25 @@ def search():
             'image': p.image
         } for p in results]
         
-        suggestions_list = [{
-            'product_id': p.product_id,
+        related_list = [{
+            'ProductId': p.product_id,
             'name': p.name, 
             'ratings': p.ratings,
             'discount_price': p.discount_price,
-            'image': p.image
-        } for p in suggestions[:6]]
+            'image': p.image,
+            'main_category': p.main_category
+        } for p in related[:6]] if isinstance(related, list) and related and hasattr(related[0], 'product_id') else related[:6]
         
         # Track recommendations if suggestions were shown
-        if suggestions_list:
+        if related_list:
             from src.components.database import Recommendation
             from datetime import date
             today = date.today()
             rec = Recommendation.query.filter_by(date=today).first()
             if rec:
-                rec.recommendation_count += len(suggestions_list)
+                rec.recommendation_count += len(related_list)
             else:
-                rec = Recommendation(recommendation_count=len(suggestions_list), date=today)
+                rec = Recommendation(recommendation_count=len(related_list), date=today)
             db.session.add(rec)
             db.session.commit()
         
@@ -441,11 +500,97 @@ def search():
                              query=query,
                              all_categories=all_categories,
                              all_subcategories=all_subcategories,
-                             suggestions=suggestions_list)
+                             suggestions=related_list)
 
 # -----------------------------
 # ROUTES - PRODUCT DETAIL
 # -----------------------------
+@app.route('/search/download')
+def download_search():
+    format_type = request.args.get('format', 'csv')
+    query = request.args.get('q', '')
+    main_category = request.args.get('main_category', '')
+    sub_category = request.args.get('sub_category', '')
+    min_price = request.args.get('min_price', type=float)
+    max_price = request.args.get('max_price', type=float)
+    min_rating = request.args.get('min_rating', type=float)
+    
+    # Build the same filtered results as /search
+    results_query = Product.query
+    if query:
+        results_query = results_query.filter(
+            Product.name.ilike(f'%{query}%') | 
+            Product.main_category.ilike(f'%{query}%') |
+            Product.sub_category.ilike(f'%{query}%')
+        )
+    if main_category:
+        results_query = results_query.filter(Product.main_category == main_category)
+    if sub_category:
+        results_query = results_query.filter(Product.sub_category == sub_category)
+    if min_price:
+        results_query = results_query.filter(Product.discount_price >= min_price)
+    if max_price:
+        results_query = results_query.filter(Product.discount_price <= max_price)
+    if min_rating:
+        results_query = results_query.filter(Product.ratings >= min_rating)
+    
+    results = results_query.order_by(Product.ratings.desc()).limit(200).all()
+    export_data = [{
+        'Product ID': p.product_id,
+        'Name': p.name,
+        'Category': p.main_category,
+        'Sub Category': p.sub_category or '',
+        'Rating': p.ratings,
+        'No of Ratings': p.no_of_ratings or 0,
+        'Original Price': p.actual_price or 0,
+        'Discount Price': p.discount_price or 0,
+        'Image Link': p.image or ''
+    } for p in results]
+    
+    if format_type == 'csv':
+        df = pd.DataFrame(export_data)
+        buffer = io.BytesIO()
+        df.to_csv(buffer, index=False)
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'search_results.csv'
+        )
+    elif format_type == 'pdf':
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="Search Results", ln=True, align='C')
+        pdf.ln(8)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(70, 8, 'Name', 1)
+        pdf.cell(35, 8, 'Category', 1)
+        pdf.cell(20, 8, 'Rating', 1)
+        pdf.cell(35, 8, 'Discount Price', 1)
+        pdf.cell(30, 8, 'ID', 1)
+        pdf.ln()
+        pdf.set_font("Arial", size=9)
+        for item in export_data[:100]:
+            name = (item['Name'][:40] + '...') if len(item['Name']) > 40 else item['Name']
+            pdf.cell(70, 8, name, 1)
+            pdf.cell(35, 8, str(item['Category'])[:20], 1)
+            pdf.cell(20, 8, str(item['Rating']), 1)
+            pdf.cell(35, 8, str(item['Discount Price']), 1)
+            pdf.cell(30, 8, str(item['Product ID']), 1)
+            pdf.ln()
+        buffer = io.BytesIO()
+        pdf_content = pdf.output(dest='S').encode('latin1')
+        buffer.write(pdf_content)
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='search_results.pdf'
+        )
+    return redirect(url_for('search', q=query, main_category=main_category, sub_category=sub_category))
 @app.route('/product/<product_id>')
 def product_detail(product_id):
     with app.app_context():
@@ -466,7 +611,7 @@ def product_detail(product_id):
         if not hybrid_recs:
             similar = Product.query.filter(
                 Product.main_category == product.main_category,
-                Product.id != product_id
+                Product.product_id != product_id
             ).order_by(Product.ratings.desc()).limit(6).all()
             
             hybrid_recs = [{
@@ -530,6 +675,104 @@ def product_detail(product_id):
                              similar=hybrid_recs,
                              related=related_list,
                              recommendation_type='hybrid' if hr else 'category')
+
+@app.route('/product/<product_id>/download')
+def download_recommendations(product_id):
+    format_type = request.args.get('format', 'csv')
+    
+    product = Product.query.filter_by(product_id=product_id).first()
+    if not product:
+        flash('Product not found', 'error')
+        return redirect(url_for('index'))
+    
+    # Get recommendations (reusing logic from product_detail)
+    hybrid_recs = []
+    hr = get_hybrid_recommender()
+    if hr:
+        user_id = session.get('user_id')
+        hybrid_recs = hr.get_hybrid_recommendations(product_id, user_id=user_id, n=10)
+    
+    if not hybrid_recs:
+        similar = Product.query.filter(
+            Product.main_category == product.main_category,
+            Product.product_id != product_id
+        ).order_by(Product.ratings.desc()).limit(10).all()
+        
+        hybrid_recs = [{
+            'ProductId': p.product_id,
+            'name': p.name, 
+            'main_category': p.main_category,
+            'discount_price': p.discount_price,
+            'ratings': p.ratings,
+            'rec_type': 'category'
+        } for p in similar]
+    
+    # Prepare data for export
+    export_data = []
+    for rec in hybrid_recs:
+        export_data.append({
+            'Product Name': rec['name'],
+            'Category': rec['main_category'],
+            'Price': rec['discount_price'],
+            'Rating': rec['ratings'],
+            'Type': rec.get('rec_type', 'hybrid')
+        })
+    
+    if format_type == 'csv':
+        df = pd.DataFrame(export_data)
+        buffer = io.BytesIO()
+        df.to_csv(buffer, index=False)
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'recommendations_{product_id}.csv'
+        )
+        
+    elif format_type == 'pdf':
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Title
+        pdf.cell(200, 10, txt=f"Recommendations for {product.name[:50]}...", ln=True, align='C')
+        pdf.ln(10)
+        
+        # Table Header
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(80, 10, 'Product Name', 1)
+        pdf.cell(40, 10, 'Category', 1)
+        pdf.cell(25, 10, 'Price', 1)
+        pdf.cell(20, 10, 'Rating', 1)
+        pdf.cell(25, 10, 'Type', 1)
+        pdf.ln()
+        
+        # Table Body
+        pdf.set_font("Arial", size=9)
+        for item in export_data:
+            name = item['Product Name'][:35] + '...' if len(item['Product Name']) > 35 else item['Product Name']
+            pdf.cell(80, 10, name, 1)
+            pdf.cell(40, 10, str(item['Category'])[:18], 1)
+            pdf.cell(25, 10, str(item['Price']), 1)
+            pdf.cell(20, 10, str(item['Rating']), 1)
+            pdf.cell(25, 10, item['Type'], 1)
+            pdf.ln()
+            
+        buffer = io.BytesIO()
+        # Output PDF to buffer
+        pdf_content = pdf.output(dest='S').encode('latin1')
+        buffer.write(pdf_content)
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'recommendations_{product_id}.pdf'
+        )
+    
+    return redirect(url_for('product_detail', product_id=product_id))
 
 # -----------------------------
 # API ROUTES

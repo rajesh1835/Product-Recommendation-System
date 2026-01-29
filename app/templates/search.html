@@ -50,8 +50,12 @@
                 <h2>Search Results {% if query %}<span class="query-highlight">"{{ query }}"</span>{% endif %}</h2>
                 <div class="results-actions">
                     {% if results %}
-                    <button onclick="downloadCSV()" class="btn-download">📥 Download Results</button>
-                    <button onclick="toggleSuggestions()" class="btn-suggest">💡 Get Suggestions</button>
+                    <a class="btn-download"
+                        href="{{ url_for('download_search', format='csv', q=query, main_category=request.args.get('main_category',''), sub_category=request.args.get('sub_category',''), min_price=request.args.get('min_price',''), max_price=request.args.get('max_price',''), min_rating=request.args.get('min_rating','')) }}">📥
+                        Download CSV</a>
+                    <a class="btn-suggest"
+                        href="{{ url_for('download_search', format='pdf', q=query, main_category=request.args.get('main_category',''), sub_category=request.args.get('sub_category',''), min_price=request.args.get('min_price',''), max_price=request.args.get('max_price',''), min_rating=request.args.get('min_rating','')) }}">📄
+                        Download PDF</a>
                     {% endif %}
                 </div>
             </div>
@@ -61,34 +65,7 @@
             <p class="results-count">Found <strong>{{ results|length }}</strong> products</p>
             {% endif %}
 
-            <!-- Suggestions Section -->
-            <div id="suggestionsSection" class="suggestions-section" style="display: none;">
-                <h3>🤖 Recommended Products for You</h3>
-                <div class="suggestions-grid">
-                    {% for product in suggestions %}
-                    <div class="suggestion-card">
-                        <img src="{{ product.image }}" alt="{{ product.name }}"
-                            onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
-                        <h4>{{ product.name[:40] }}...</h4>
-                        <p>⭐ {{ product.ratings }}</p>
-                        <p class="price">₹{{ "{:,.0f}".format(product.discount_price) }}</p>
-                        {% if product.rec_type %}
-                        <div style="margin-top: 5px;">
-                            <span class="badge badge-{{ product.rec_type }}"
-                                style="font-size: 0.6rem; padding: 1px 4px;">
-                                {% if product.rec_type == 'hybrid' %}🤖 Hybrid
-                                {% elif product.rec_type == 'content' %}📄 Content
-                                {% elif product.rec_type == 'collaborative' %}👥 Popular
-                                {% else %}📁 Category{% endif %}
-                            </span>
-                        </div>
-                        {% endif %}
-                        <a href="{{ url_for('product_detail', product_id=product.product_id) }}"
-                            class="btn-small">View</a>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+            <!-- Similar Products Section intentionally removed per request -->
 
             <!-- Products Grid -->
             {% if results %}
@@ -140,58 +117,47 @@
                 {% endif %}
             </div>
             {% endif %}
+
+            <!-- Related Products Section (moved below results) -->
+            {% if suggestions %}
+            <div class="suggestions-section"
+                style="margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem; width: 100%;">
+                <h3
+                    style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
+                    <span style="font-size: 1.4rem;">🔗</span> Related Products You Might Like
+                </h3>
+                <div class="suggestions-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem;">
+                    {% for product in suggestions %}
+                    <div class="suggestion-card"
+                        style="background: var(--bg-card); padding: 1rem; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+                        <img src="{{ product.image }}" alt="{{ product.name }}"
+                            style="width: 100%; height: 150px; object-fit: contain; border-radius: 8px; margin-bottom: 1rem;"
+                            onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
+                        <h4
+                            style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary); line-height: 1.4;">
+                            {{ product.name[:40] }}{% if product.name|length > 40 %}...{% endif %}</h4>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                            <p style="color: #f59e0b; font-weight: 600; margin: 0;">⭐ {{ product.ratings }}</p>
+                            <p class="price" style="font-weight: 700; color: var(--primary); margin: 0;">₹{{
+                                "{:,.0f}".format(product.discount_price|default(0)) }}</p>
+                        </div>
+                        <a href="{{ url_for('product_detail', product_id=product.ProductId or product.product_id) }}"
+                            class="btn-small"
+                            style="margin-top: 1rem; display: block; text-align: center; background: var(--primary); color: white; padding: 0.5rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; font-weight: 500;">View
+                            Detail</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </section>
     </div>
 </div>
 
 <script>
-    function downloadCSV() {
-        const results_data = {{ results| tojson
-    }};
-    if (!results_data || results_data.length === 0) {
-        alert('No results to download');
-        return;
-    }
-
-    // Get filter values
-    const query = document.querySelector('input[name="q"]').value;
-    const mainCategory = document.querySelector('select[name="main_category"]').value;
-    const subCategory = document.querySelector('select[name="sub_category"]').value;
-    const minPrice = document.querySelector('input[name="min_price"]').value;
-    const maxPrice = document.querySelector('input[name="max_price"]').value;
-    const minRating = document.querySelector('select[name="min_rating"]').value;
-
-    // Prepare CSV content with filters and image link
-    let csv = 'Search Filters Applied\n';
-    csv += `"Query","${query}"\n`;
-    csv += `"Main Category","${mainCategory || 'All'}"\n`;
-    csv += `"Sub Category","${subCategory || 'All'}"\n`;
-    csv += `"Price Range","${minPrice || '0'} - ${maxPrice || 'Any'}"\n`;
-    csv += `"Minimum Rating","${minRating || 'All'}"\n`;
-    csv += `"Downloaded","${new Date().toLocaleString()}"\n\n`;
-
-    csv += 'Product ID,Name,Category,Sub Category,Rating,No of Ratings,Original Price,Discount Price,Image Link\n';
-
-    results_data.forEach(product => {
-        csv += `"${product.ProductId}","${product.name.replace(/"/g, '""')}","${product.main_category}","${product.sub_category || ''}",${product.ratings},${product.no_of_ratings},${product.actual_price || ''},${product.discount_price},"${product.image || ''}"\n`;
-    });
-
-    // Create blob and download
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `search_results_${new Date().getTime()}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-}
-
-    function toggleSuggestions() {
-        const section = document.getElementById('suggestionsSection');
-        section.style.display = section.style.display === 'none' ? 'block' : 'none';
-    }
+    // No JS needed for downloads; handled server-side
 </script>
 
 <style>
@@ -395,7 +361,7 @@
     }
 
     .suggestion-card {
-        background: white;
+        background: var(--bg-card);
         padding: 1rem;
         border-radius: 8px;
         text-align: center;

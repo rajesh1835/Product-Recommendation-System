@@ -55,20 +55,34 @@
         </div>
     </section>
 
-    <!-- Analytics Charts Section -->
+    <!-- Analytics & Insights Selection -->
     <section class="dashboard-section" style="margin-bottom: 3rem;">
-        <h2 style="margin-bottom: 1.5rem;">📊 Analytics</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+        <h2 style="margin-bottom: 1.5rem;">📊 Data Insights</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
             <!-- Visitors Chart -->
-            <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
-                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">👥 Visitors (Last 7 Days)</h3>
+            <div class="chart-container-card">
+                <h3>👥 Visitors (Last 7 Days)</h3>
                 <canvas id="visitorsChart"></canvas>
             </div>
             
             <!-- Recommendations Chart -->
-            <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
-                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">💡 Recommendations (Last 7 Days)</h3>
+            <div class="chart-container-card">
+                <h3>💡 Recommendations (Last 7 Days)</h3>
                 <canvas id="recommendationsChart"></canvas>
+            </div>
+
+            <!-- Category Sharing Chart (Doughnut) -->
+            <div class="chart-container-card">
+                <h3>📂 Category Sharing</h3>
+                <div style="height: 300px; display: flex; justify-content: center;">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Rating Distribution Chart (Bar) -->
+            <div class="chart-container-card">
+                <h3>⭐ Rating Distribution</h3>
+                <canvas id="ratingDistChart"></canvas>
             </div>
         </div>
     </section>
@@ -247,6 +261,19 @@
     color: var(--primary);
     font-weight: 600;
 }
+.chart-container-card {
+    background: var(--bg-card); 
+    padding: 1.5rem; 
+    border-radius: 12px; 
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.chart-container-card h3 {
+    margin-bottom: 1.5rem; 
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -333,6 +360,76 @@
                     x: {
                         ticks: { color: 'var(--text-secondary)' },
                         grid: { color: 'var(--border)' }
+                    }
+                }
+            }
+        });
+    }
+
+    // Category Pie Chart
+    const categoryCtx = document.getElementById('categoryPieChart')?.getContext('2d');
+    if (categoryCtx) {
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ category_chart_data.labels|tojson if category_chart_data else '[]'|tojson }},
+                datasets: [{
+                    data: {{ category_chart_data.counts|tojson if category_chart_data else '[]'|tojson }},
+                    backgroundColor: [
+                        '#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#f59e0b', 
+                        '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef'
+                    ],
+                    borderWidth: 2,
+                    borderColor: 'var(--bg-card)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: 'var(--text-primary)',
+                            padding: 20,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Rating Distribution Chart
+    const ratingDistCtx = document.getElementById('ratingDistChart')?.getContext('2d');
+    if (ratingDistCtx) {
+        new Chart(ratingDistCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ rating_dist_data.labels|tojson if rating_dist_data else '[]'|tojson }},
+                datasets: [{
+                    label: 'Number of Products',
+                    data: {{ rating_dist_data.counts|tojson if rating_dist_data else '[]'|tojson }},
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: 'var(--text-secondary)' },
+                        grid: { color: 'var(--border)' }
+                    },
+                    x: {
+                        ticks: { color: 'var(--text-secondary)' },
+                        grid: { display: false }
                     }
                 }
             }
