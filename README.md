@@ -10,6 +10,8 @@ An industrial-grade E-Commerce recommendation engine built with Python and Flask
 ## 📋 Table of Contents
 
 - [Features](#-features)
+- [Demo](#-demo)
+- [Dataset](#-dataset)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Installation](#-installation)
@@ -31,6 +33,17 @@ An industrial-grade E-Commerce recommendation engine built with Python and Flask
 - 📱 **Responsive Design** - Works on desktop and mobile
 - 🤖 **ML-Powered** - Multi-model comparison (KNN, SVD, Baseline) using Scikit-Surprise library
 - ⚡ **Real-time Engine** - Dynamic hybrid scoring with α-weighted combination logic
+
+## 🎥 Demo
+
+> **Watch the system in action:** [Click here to watch demo video](https://1drv.ms/v/c/7a629c80013a5764/IQDtFaKGi78PR4KGZENdx6-hAXND8Lhn-MJMlOmcd2C8ZHI)
+
+## 📂 Dataset
+
+The system utilizes a rich dataset of Amazon products and user reviews to generate recommendations.
+
+- **Amazon Products**: [Download Here](https://drive.google.com/file/d/1HvrCPVh_BWykakKFcBdWgyznDwUfOtv1/view?usp=sharing)
+- **User Reviews**: [Download Here](https://drive.google.com/file/d/1HvrCPVh_BWykakKFcBdWgyznDwUfOtv1/view?usp=drive_link)
 
 ## 🛠️ Tech Stack
 
