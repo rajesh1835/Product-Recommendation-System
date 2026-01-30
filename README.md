@@ -43,7 +43,7 @@ An industrial-grade E-Commerce recommendation engine built with Python and Flask
 The system utilizes a rich dataset of Amazon products and user reviews to generate recommendations.
 
 - **Amazon Products**: [Download Here](https://drive.google.com/file/d/1HvrCPVh_BWykakKFcBdWgyznDwUfOtv1/view?usp=sharing)
-- **User Reviews**: [Download Here](https://drive.google.com/file/d/1HvrCPVh_BWykakKFcBdWgyznDwUfOtv1/view?usp=drive_link)
+- **User Reviews**: [Download Here](https://drive.google.com/file/d/1DRrEnV4HlbeT9N0EUSEfVi6MubcYYk3o/view?usp=sharing)
 
 ## 🛠️ Tech Stack
 
