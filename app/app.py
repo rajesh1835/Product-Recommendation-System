@@ -572,18 +572,22 @@ def download_search():
         pdf.cell(30, 8, 'ID', 1)
         pdf.ln()
         pdf.set_font("Arial", size=9)
+        # Generate PDF using fpdf2
+        # Clean data for PDF (remove non-latin1 chars to avoid fpdf errors with default fonts)
+        def clean_for_pdf(s):
+            return str(s).encode('latin-1', 'replace').decode('latin-1')
+
         for item in export_data[:100]:
-            name = (item['Name'][:40] + '...') if len(item['Name']) > 40 else item['Name']
+            name = clean_for_pdf(item['Name'])
+            name = (name[:37] + '...') if len(name) > 40 else name
             pdf.cell(70, 8, name, 1)
-            pdf.cell(35, 8, str(item['Category'])[:20], 1)
+            pdf.cell(35, 8, clean_for_pdf(item['Category'])[:20], 1)
             pdf.cell(20, 8, str(item['Rating']), 1)
             pdf.cell(35, 8, str(item['Discount Price']), 1)
-            pdf.cell(30, 8, str(item['Product ID']), 1)
+            pdf.cell(30, 8, clean_for_pdf(item['Product ID']), 1)
             pdf.ln()
-        buffer = io.BytesIO()
-        pdf_content = pdf.output(dest='S').encode('latin1')
-        buffer.write(pdf_content)
-        buffer.seek(0)
+            
+        buffer = io.BytesIO(pdf.output())
         return send_file(
             buffer,
             mimetype='application/pdf',
@@ -748,23 +752,23 @@ def download_recommendations(product_id):
         pdf.cell(25, 10, 'Type', 1)
         pdf.ln()
         
+        # Clean data for PDF
+        def clean_for_pdf(s):
+            return str(s).encode('latin-1', 'replace').decode('latin-1')
+
         # Table Body
         pdf.set_font("Arial", size=9)
         for item in export_data:
-            name = item['Product Name'][:35] + '...' if len(item['Product Name']) > 35 else item['Product Name']
+            name = clean_for_pdf(item['Product Name'])
+            name = name[:32] + '...' if len(name) > 35 else name
             pdf.cell(80, 10, name, 1)
-            pdf.cell(40, 10, str(item['Category'])[:18], 1)
+            pdf.cell(40, 10, clean_for_pdf(item['Category'])[:18], 1)
             pdf.cell(25, 10, str(item['Price']), 1)
             pdf.cell(20, 10, str(item['Rating']), 1)
-            pdf.cell(25, 10, item['Type'], 1)
+            pdf.cell(25, 10, clean_for_pdf(item['Type']), 1)
             pdf.ln()
             
-        buffer = io.BytesIO()
-        # Output PDF to buffer
-        pdf_content = pdf.output(dest='S').encode('latin1')
-        buffer.write(pdf_content)
-        buffer.seek(0)
-        
+        buffer = io.BytesIO(pdf.output())
         return send_file(
             buffer,
             mimetype='application/pdf',

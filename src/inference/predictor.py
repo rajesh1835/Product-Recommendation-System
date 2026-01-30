@@ -6,6 +6,7 @@ import os
 import pickle
 import pandas as pd
 from surprise import Dataset, Reader, KNNBasic, KNNWithMeans, SVD, BaselineOnly
+from src.models.content_based import ContentBasedRecommender
 
 
 # -----------------------------
@@ -133,6 +134,21 @@ def get_recommendations(user_id, n=5, model=None):
 
 
 # -----------------------------
+# GET SIMILAR PRODUCTS (CONTENT)
+# -----------------------------
+def get_similar_products(product_id, n=5):
+    """
+    Get products similar to a given product_id using Content-Based Filtering
+    """
+    products_df = pd.read_csv(PRODUCTS_PATH)
+    
+    # Initialize Content-Based Model
+    cb_model = ContentBasedRecommender(products_df)
+    
+    return cb_model.get_recommendations(product_id, n=n)
+
+
+# -----------------------------
 # DEMO PREDICTIONS
 # -----------------------------
 def demo_predictions(n_users=3, n_recs=5):
@@ -160,6 +176,42 @@ def demo_predictions(n_users=3, n_recs=5):
             print(f"   {i+1}. {name}... (predicted: {rating:.2f}⭐)")
     
     print("\n" + "=" * 60)
+    
+    # ------------------------------------------------
+    # PART 2: Content-Based Recommendations
+    # ------------------------------------------------
+    print(" 🔄 SIMILAR PRODUCT RECOMMENDATIONS (Content-Based) ")
+    print("=" * 60)
+    
+    # Pick random products to find similarities for
+    products_df = pd.read_csv(PRODUCTS_PATH)
+    sample_products = products_df["ProductId"].sample(n_users, random_state=42).tolist()
+    
+    for product_id in sample_products:
+        product_name = products_df[products_df["ProductId"] == product_id]["name"].values[0]
+        display_name = str(product_name)[:50]
+        
+        print(f"\n📦 Product: {display_name}...")
+        print(f"   (ID: {product_id})")
+        print("-" * 50)
+        
+        try:
+            similar_recs = get_similar_products(product_id, n=n_recs)
+            
+            if similar_recs.empty:
+                print("   No similar products found.")
+                continue
+
+            for i, row in similar_recs.iterrows():
+                name = str(row["name"])[:40]
+                score = row["similarity_score"]
+                print(f"   {i+1}. {name}... (similarity: {score:.2f})")
+                
+        except Exception as e:
+            print(f"   Error generating recommendations: {e}")
+
+    print("\n" + "=" * 60)
+
     return sample_users
 
 

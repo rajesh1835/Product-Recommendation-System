@@ -143,18 +143,31 @@ def main():
 
     eda = EDA(sampled_df)
     
-    # Visualizations
+    # -----------------------------
+    # 6.1 Univariate Analysis
+    # -----------------------------
+    print("   [6.1] Univariate Analysis (Individual Distributions)...")
     eda.category_distribution()
     eda.ratings_distribution()
-    eda.correlation_matrix()
-    eda.price_analysis()
     eda.popularity_distribution()
+
+    # -----------------------------
+    # 6.2 Bivariate Analysis
+    # -----------------------------
+    print("\n   [6.2] Bivariate Analysis (Relationships)...")
+    eda.price_analysis() 
     eda.top_product_per_category()
     eda.ratings_vs_popularity()
+
+    # -----------------------------
+    # 6.3 Multivariate Analysis
+    # -----------------------------
+    print("\n   [6.3] Multivariate Analysis (Correlations)...")
+    eda.correlation_matrix()
     
-    # Storytelling & Feature Selection
+    # Storytelling
     eda.generate_insights()
-    eda.feature_selection_analysis()
+
 
     print("\n✔ EDA completed - All visualizations saved to artifacts/eda/\n")
 
