@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+notebooks/
+report/
+Project Explanation/
+data/raw/
+artifacts/knn_basic_model.pkl
+Dockerfile
