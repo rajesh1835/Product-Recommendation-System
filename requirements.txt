@@ -10,6 +10,7 @@ flask==3.0.0
 werkzeug==3.0.1
 flask-sqlalchemy==3.1.1
 pymysql==1.1.0
+cryptography==42.0.8
 python-dotenv==1.0.0
 plotly==5.17.0
 streamlit==1.28.1
