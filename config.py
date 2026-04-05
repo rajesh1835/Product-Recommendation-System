@@ -4,19 +4,40 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_database_url():
-    """Get database URL, handling Railway's mysql:// prefix"""
-    url = os.getenv('DATABASE_URL')
+    """Get database URL from Railway environment variables.
+
+    Resolution order:
+    1. MYSQL_URL  — the full connection URL provided by Railway.
+    2. Individual variables: MYSQLHOST, MYSQLPORT, MYSQLUSER,
+       MYSQLPASSWORD, MYSQLDATABASE — also provided by Railway.
+
+    Raises EnvironmentError if neither source is available, so the app
+    fails fast with a clear message instead of silently trying localhost.
+    """
+    # 1. Prefer the full URL when Railway provides it.
+    url = os.getenv('MYSQL_URL')
     if url:
-        # Railway sometimes gives mysql:// but SQLAlchemy needs mysql+pymysql://
+        # SQLAlchemy requires the mysql+pymysql:// dialect prefix.
         if url.startswith('mysql://'):
             url = url.replace('mysql://', 'mysql+pymysql://', 1)
         return url
-    # Fallback: build from individual vars (for local dev without DATABASE_URL)
-    user = os.getenv('DB_USER', 'root')
-    password = os.getenv('DB_PASSWORD', '')
-    host = os.getenv('DB_HOST', 'localhost')
-    db_name = os.getenv('DB_NAME', 'recommender_db')
-    return f"mysql+pymysql://{user}:{password}@{host}/{db_name}"
+
+    # 2. Build the URL from individual Railway MySQL variables.
+    host = os.getenv('MYSQLHOST')
+    if not host:
+        raise EnvironmentError(
+            "Database configuration is missing. "
+            "Set MYSQL_URL, or set MYSQLHOST (along with MYSQLPORT, "
+            "MYSQLUSER, MYSQLPASSWORD, and MYSQLDATABASE) in the "
+            "Railway service environment variables."
+        )
+
+    port = os.getenv('MYSQLPORT', '3306')
+    user = os.getenv('MYSQLUSER', 'root')
+    password = os.getenv('MYSQLPASSWORD', '')
+    db_name = os.getenv('MYSQLDATABASE', 'railway')
+
+    return f"mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}"
 
 class Config:
     SQLALCHEMY_DATABASE_URI = get_database_url()
