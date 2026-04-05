@@ -9,12 +9,14 @@ COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir gunicorn
 
 # Copy the current directory contents into the container at /app
 COPY . .
 
-# Make port 5000 available to the world outside this container
-EXPOSE 5000
+# Railway sets PORT dynamically, default to 5000 for local
+ENV PORT=5000
+EXPOSE $PORT
 
-# Run app.py when the container launches
-CMD ["python", "app/app.py"]
+# Use gunicorn for production (Railway compatible)
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app.app:app

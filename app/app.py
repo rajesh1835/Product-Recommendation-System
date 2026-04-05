@@ -852,6 +852,7 @@ def api_stats():
 # RUN
 # -----------------------------
 if __name__ == '__main__':
-    print("\n🚀 Starting Flask server...")
-    print("📍 Open http://127.0.0.1:5000 in your browser\n")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"\n🚀 Starting Flask server on port {port}...")
+    print(f"📍 Open http://127.0.0.1:{port} in your browser\n")
+    app.run(debug=True, port=port, host='0.0.0.0')

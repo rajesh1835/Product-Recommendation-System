@@ -28,8 +28,8 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Model Files (too large)
-artifacts/*.pkl
+# Model Files (too large - exclude only the huge one)
+artifacts/knn_basic_model.pkl
 
 # Database
 *.db
@@ -48,8 +48,9 @@ app/instance/
 .DS_Store
 Thumbs.db
 
-# DATA FOLDER (excluded - too large for GitHub)
-data/
+# DATA FOLDER - exclude raw data but keep processed for deployment
+data/raw/
+data/processed/amazon_products_with_reviews.csv
 
 # NOTEBOOKS FOLDER
 notebooks/
