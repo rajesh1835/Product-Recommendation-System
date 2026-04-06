@@ -206,29 +206,39 @@ class HybridRecommender:
     
     def get_collaborative_recommendations(self, user_id, product_id=None, n=6):
         """
-        Get collaborative filtering recommendations
-        
-        Args:
-            user_id: User ID for personalized recommendations
-            product_id: Optional product ID to exclude
-            n: Number of recommendations
-            
-        Returns:
-            List of dicts with product info and predicted ratings
+        Get collaborative filtering recommendations - Optimized for speed
         """
-        if self.cf_model is None:
+        if self.cf_model is None or self.products is None:
             return []
         
         try:
-            # Get all products
-            all_products = list(self.product_id_to_idx.keys())
+            # OPTIMIZATION: Instead of predicting for all 539k+ products,
+            # we only predict for products in the same category or related categories
+            # This reduces N from 500k+ to a few thousand, making it 100x faster.
             
-            # Predict ratings for all products
+            target_category = None
+            if product_id and product_id in self.product_id_to_idx:
+                idx = self.product_id_to_idx[product_id]
+                target_category = self.products.iloc[idx].get('main_category')
+            
+            # Get candidate product IDs (limit to 1000 for performance)
+            if target_category:
+                candidates = self.products[self.products['main_category'] == target_category]
+                if len(candidates) > 1000:
+                    candidates = candidates.sample(1000)
+            else:
+                # If no category, just pick 1000 random products as candidates
+                candidates = self.products.sample(min(1000, len(self.products)))
+            
+            candidate_pids = candidates[self.products.columns[0]].tolist()
+            
+            # Predict ratings only for candidates
             predictions = []
-            for pid in all_products:
+            for pid in candidate_pids:
                 if pid == product_id:
                     continue
                 try:
+                    # Surprise model predict(uid, iid)
                     pred = self.cf_model.predict(user_id, pid)
                     predictions.append((pid, pred.est))
                 except:

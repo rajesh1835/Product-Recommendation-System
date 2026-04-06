@@ -20,34 +20,34 @@
     </div>
 
     <!-- KPI Cards -->
-    <section class="kpi-section">
+    <section class="kpi-section fade-in">
         <div class="kpi-container">
-            <div class="kpi-card">
+            <div class="kpi-card glass">
                 <div class="kpi-icon">📦</div>
                 <div class="kpi-value">{{ "{:,}".format(kpi.total_products) }}</div>
                 <div class="kpi-label">Total Products</div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card glass">
                 <div class="kpi-icon">🏷️</div>
                 <div class="kpi-value">{{ kpi.total_categories }}</div>
                 <div class="kpi-label">Categories</div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card glass">
                 <div class="kpi-icon">⭐</div>
                 <div class="kpi-value">{{ kpi.avg_rating }}</div>
                 <div class="kpi-label">Avg Rating</div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card glass">
                 <div class="kpi-icon">💰</div>
                 <div class="kpi-value">₹{{ "{:,.0f}".format(kpi.avg_price|float) }}</div>
                 <div class="kpi-label">Avg Price</div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card glass">
                 <div class="kpi-icon">👥</div>
                 <div class="kpi-value">{{ "{:,}".format(total_visitors or 0) }}</div>
                 <div class="kpi-label">Total Visitors</div>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card glass">
                 <div class="kpi-icon">💡</div>
                 <div class="kpi-value">{{ "{:,}".format(total_recommendations or 0) }}</div>
                 <div class="kpi-label">Recommendations</div>
@@ -56,23 +56,23 @@
     </section>
 
     <!-- Analytics & Insights Selection -->
-    <section class="dashboard-section" style="margin-bottom: 3rem;">
+    <section class="dashboard-section fade-in" style="margin-bottom: 3rem;">
         <h2 style="margin-bottom: 1.5rem;">📊 Data Insights</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
             <!-- Visitors Chart -->
-            <div class="chart-container-card">
+            <div class="chart-container-card glass">
                 <h3>👥 Visitors (Last 7 Days)</h3>
                 <canvas id="visitorsChart"></canvas>
             </div>
             
             <!-- Recommendations Chart -->
-            <div class="chart-container-card">
+            <div class="chart-container-card glass">
                 <h3>💡 Recommendations (Last 7 Days)</h3>
                 <canvas id="recommendationsChart"></canvas>
             </div>
 
             <!-- Category Sharing Chart (Doughnut) -->
-            <div class="chart-container-card">
+            <div class="chart-container-card glass">
                 <h3>📂 Category Sharing</h3>
                 <div style="height: 300px; display: flex; justify-content: center;">
                     <canvas id="categoryPieChart"></canvas>
@@ -80,7 +80,7 @@
             </div>
 
             <!-- Rating Distribution Chart (Bar) -->
-            <div class="chart-container-card">
+            <div class="chart-container-card glass">
                 <h3>⭐ Rating Distribution</h3>
                 <canvas id="ratingDistChart"></canvas>
             </div>
@@ -89,11 +89,11 @@
 
     <!-- Top Categories Section -->
     {% if categories %}
-    <section class="dashboard-section" style="margin-bottom: 3rem;">
+    <section class="dashboard-section fade-in" style="margin-bottom: 3rem;">
         <h2 style="margin-bottom: 1.5rem;">📊 Top Categories</h2>
-        <div class="products-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+        <div class="products-grid">
             {% for category in categories %}
-            <div class="category-card" style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+            <div class="category-card glass">
                 <h3 style="margin-bottom: 0.5rem;">{{ category.name }}</h3>
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ category.count }} products</p>
                 <p style="color: var(--accent); font-weight: bold; font-size: 1.1rem;">⭐ {{ category.avg_rating }}</p>
@@ -105,22 +105,24 @@
 
     <!-- Top Rated Products -->
     {% if top_rated %}
-    <section class="dashboard-section" style="margin-bottom: 3rem;">
+    <section class="dashboard-section fade-in" style="margin-bottom: 3rem;">
         <h2 style="margin-bottom: 1.5rem;">⭐ Top Rated Products</h2>
         <div class="products-grid">
             {% for product in top_rated %}
             <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
                 <div class="product-image">
-                    {% if product.image %}
-                    <img src="{{ product.image }}" alt="{{ product.name }}" onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                    {% if product.image and product.image != 'nan' and product.image != 'None' %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="no-image-placeholder" style="display: none; font-size: 3rem; opacity: 0.3;">🖼️</div>
                     {% else %}
-                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    <div class="no-image-placeholder" style="font-size: 3rem; opacity: 0.3;">🖼️</div>
                     {% endif %}
                 </div>
                 <div class="product-info">
                     <h3 class="product-name">{{ product.name[:40] }}...</h3>
                     <div class="product-meta">
-                        <span class="product-rating">⭐ {{ product.rating }}</span>
+                        <span class="product-rating">⭐ {{ product.ratings|default(product.rating) }}</span>
                         <span style="color: var(--text-secondary); font-size: 0.85rem;">({{ product.no_of_ratings }} reviews)</span>
                     </div>
                 </div>
@@ -132,26 +134,30 @@
 
     <!-- Best Deals -->
     {% if best_deals %}
-    <section class="dashboard-section" style="margin-bottom: 3rem;">
+    <section class="dashboard-section fade-in" style="margin-bottom: 3rem;">
         <h2 style="margin-bottom: 1.5rem;">🎉 Best Deals & Discounts</h2>
-        <div class="deals-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        <div class="products-grid">
             {% for deal in best_deals %}
-            <a href="{{ url_for('product_detail', product_id=deal.ProductId) }}" class="deal-card" style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; text-decoration: none; color: inherit; transition: transform 0.3s;">
-                <div class="product-image" style="position: relative; height: 150px; overflow: hidden;">
-                    {% if deal.image %}
-                    <img src="{{ deal.image }}" alt="{{ deal.name }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/280x150?text=No+Image'">
+            <a href="{{ url_for('product_detail', product_id=deal.ProductId) }}" class="product-card">
+                <div class="product-image">
+                    {% if deal.image and deal.image != 'nan' and deal.image != 'None' %}
+                    <img src="{{ deal.image }}" alt="{{ deal.name }}"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="no-image-placeholder" style="display: none; font-size: 3rem; opacity: 0.3;">🖼️</div>
                     {% else %}
-                    <img src="https://via.placeholder.com/280x150?text=No+Image" alt="No image" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="no-image-placeholder" style="font-size: 3rem; opacity: 0.3;">🖼️</div>
                     {% endif %}
-                    <div style="position: absolute; top: 10px; right: 10px; background: #ff4444; color: white; padding: 0.5rem 0.75rem; border-radius: 8px; font-weight: bold; font-size: 0.9rem;">-{{ deal.discount_pct }}%</div>
+                    <div style="position: absolute; top: 10px; right: 10px; background: #ff4444; color: white; padding: 0.4rem 0.6rem; border-radius: 8px; font-weight: bold; font-size: 0.8rem; z-index: 10;">-{{ deal.discount_pct }}%</div>
                 </div>
-                <div style="padding: 1rem;">
-                    <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;">{{ deal.name[:35] }}...</h3>
-                    <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
-                        <span style="text-decoration: line-through; color: var(--text-secondary);">₹{{ "{:,.0f}".format(deal.original_price|clean_price) }}</span>
-                        <span style="color: var(--accent); font-weight: bold; font-size: 1.1rem;">₹{{ "{:,.0f}".format(deal.discount_price|clean_price) }}</span>
+                <div class="product-info">
+                    <h3 class="product-name">{{ deal.name[:35] }}...</h3>
+                    <div class="product-meta">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="text-decoration: line-through; color: var(--text-secondary); font-size: 0.85rem;">₹{{ "{:,.0f}".format(deal.original_price|clean_price) }}</span>
+                            <span style="color: var(--accent); font-weight: bold; font-size: 1.1rem;">₹{{ "{:,.0f}".format(deal.discount_price|clean_price) }}</span>
+                        </div>
+                        <p style="color: #10b981; font-weight: bold; font-size: 0.8rem; margin: 0;">Save ₹{{ "{:,.0f}".format(deal.savings|clean_price) }}</p>
                     </div>
-                    <p style="color: #00aa00; font-weight: bold;">You save: ₹{{ "{:,.0f}".format(deal.savings|clean_price) }}</p>
                 </div>
             </a>
             {% endfor %}
@@ -161,16 +167,18 @@
 
     <!-- Popular Products -->
     {% if popular %}
-    <section class="dashboard-section">
+    <section class="dashboard-section fade-in">
         <h2 style="margin-bottom: 1.5rem;">🔥 Popular Products</h2>
         <div class="products-grid">
             {% for product in popular %}
             <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
                 <div class="product-image">
-                    {% if product.image %}
-                    <img src="{{ product.image }}" alt="{{ product.name }}" onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                    {% if product.image and product.image != 'nan' and product.image != 'None' %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="no-image-placeholder" style="display: none; font-size: 3rem; opacity: 0.3;">🖼️</div>
                     {% else %}
-                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    <div class="no-image-placeholder" style="font-size: 3rem; opacity: 0.3;">🖼️</div>
                     {% endif %}
                 </div>
                 <div class="product-info">
@@ -178,10 +186,7 @@
                     <p class="product-category">{{ product.main_category }}</p>
                     <div class="product-meta">
                         <span class="product-rating">⭐ {{ product.ratings }}</span>
-                        <span class="product-price">₹{{ "{:,.0f}".format(product.discount_price) }}</span>
-                        {% if product.actual_price and product.actual_price > 0 %}
-                        <span style="background: #e74c3c; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; margin-left: 0.3rem;">-{{ "%.0f"|format(((product.actual_price - product.discount_price) / product.actual_price) * 100) }}%</span>
-                        {% endif %}
+                        <span class="product-price">₹{{ "{:,.0f}".format(product.discount_price|clean_price) }}</span>
                     </div>
                 </div>
             </a>
@@ -192,108 +197,36 @@
 </div>
 
 <style>
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.product-card {
-    background: var(--bg-card);
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.product-image {
+/* Local style overrides for dashboard specificity */
+.dashboard-section {
     width: 100%;
-    height: 180px;
-    overflow: hidden;
-}
-
-.product-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.product-info {
-    padding: 1rem;
-}
-
-.product-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.product-category {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.product-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-}
-
-.product-rating {
-    color: var(--accent);
-    font-weight: 600;
-}
-
-.product-price {
-    color: var(--primary);
-    font-weight: 600;
-}
-.chart-container-card {
-    background: var(--bg-card); 
-    padding: 1.5rem; 
-    border-radius: 12px; 
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-.chart-container-card h3 {
-    margin-bottom: 1.5rem; 
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
 }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <script>
+    // Helper to get element
+    function getCtx(id) {
+        const el = document.getElementById(id);
+        return el ? el.getContext('2d') : null;
+    }
+
     // Visitors Chart
-    const visitorsCtx = document.getElementById('visitorsChart')?.getContext('2d');
+    const visitorsCtx = getCtx('visitorsChart');
     if (visitorsCtx) {
         new Chart(visitorsCtx, {
             type: 'line',
             data: {
-                labels: {{ visitors_chart_data.dates|tojson if visitors_chart_data else '[]'|tojson }},
+                labels: {{ (visitors_chart_data.dates if visitors_chart_data else []) | tojson }},
                 datasets: [{
                     label: 'Visitors',
-                    data: {{ visitors_chart_data.counts|tojson if visitors_chart_data else '[]'|tojson }},
-                    borderColor: 'var(--accent)',
+                    data: {{ (visitors_chart_data.counts if visitors_chart_data else []) | tojson }},
+                    borderColor: '#6366f1',
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
                     tension: 0.4,
                     fill: true,
                     pointRadius: 5,
-                    pointBackgroundColor: 'var(--accent)',
+                    pointBackgroundColor: '#6366f1',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2
                 }]
@@ -304,20 +237,7 @@
                 plugins: {
                     legend: {
                         display: true,
-                        labels: {
-                            color: 'var(--text-primary)',
-                            font: { size: 12 }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        ticks: { color: 'var(--text-secondary)' },
-                        grid: { color: 'var(--border)' }
-                    },
-                    x: {
-                        ticks: { color: 'var(--text-secondary)' },
-                        grid: { color: 'var(--border)' }
+                        labels: { color: '#64748b' }
                     }
                 }
             }
@@ -325,15 +245,15 @@
     }
 
     // Recommendations Chart
-    const recommendationsCtx = document.getElementById('recommendationsChart')?.getContext('2d');
+    const recommendationsCtx = getCtx('recommendationsChart');
     if (recommendationsCtx) {
         new Chart(recommendationsCtx, {
             type: 'bar',
             data: {
-                labels: {{ recommendations_chart_data.dates|tojson if recommendations_chart_data else '[]'|tojson }},
+                labels: {{ (recommendations_chart_data.dates if recommendations_chart_data else []) | tojson }},
                 datasets: [{
                     label: 'Recommendations',
-                    data: {{ recommendations_chart_data.counts|tojson if recommendations_chart_data else '[]'|tojson }},
+                    data: {{ (recommendations_chart_data.counts if recommendations_chart_data else []) | tojson }},
                     backgroundColor: 'rgba(168, 85, 247, 0.7)',
                     borderColor: '#a855f7',
                     borderWidth: 2,
@@ -344,72 +264,48 @@
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            color: 'var(--text-primary)',
-                            font: { size: 12 }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        ticks: { color: 'var(--text-secondary)' },
-                        grid: { color: 'var(--border)' }
-                    },
-                    x: {
-                        ticks: { color: 'var(--text-secondary)' },
-                        grid: { color: 'var(--border)' }
-                    }
+                    legend: { display: true }
                 }
             }
         });
     }
 
     // Category Pie Chart
-    const categoryCtx = document.getElementById('categoryPieChart')?.getContext('2d');
+    const categoryCtx = getCtx('categoryPieChart');
     if (categoryCtx) {
         new Chart(categoryCtx, {
             type: 'doughnut',
             data: {
-                labels: {{ category_chart_data.labels|tojson if category_chart_data else '[]'|tojson }},
+                labels: {{ (category_chart_data.labels if category_chart_data else []) | tojson }},
                 datasets: [{
-                    data: {{ category_chart_data.counts|tojson if category_chart_data else '[]'|tojson }},
+                    data: {{ (category_chart_data.counts if category_chart_data else []) | tojson }},
                     backgroundColor: [
                         '#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#f59e0b', 
                         '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef'
                     ],
-                    borderWidth: 2,
-                    borderColor: 'var(--bg-card)'
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            color: 'var(--text-primary)',
-                            padding: 20,
-                            font: { size: 11 }
-                        }
-                    }
+                    legend: { position: 'right' }
                 }
             }
         });
     }
 
     // Rating Distribution Chart
-    const ratingDistCtx = document.getElementById('ratingDistChart')?.getContext('2d');
+    const ratingDistCtx = getCtx('ratingDistChart');
     if (ratingDistCtx) {
         new Chart(ratingDistCtx, {
             type: 'bar',
             data: {
-                labels: {{ rating_dist_data.labels|tojson if rating_dist_data else '[]'|tojson }},
+                labels: {{ (rating_dist_data.labels if rating_dist_data else []) | tojson }},
                 datasets: [{
                     label: 'Number of Products',
-                    data: {{ rating_dist_data.counts|tojson if rating_dist_data else '[]'|tojson }},
+                    data: {{ (rating_dist_data.counts if rating_dist_data else []) | tojson }},
                     backgroundColor: 'rgba(245, 158, 11, 0.7)',
                     borderColor: '#f59e0b',
                     borderWidth: 2,
@@ -420,17 +316,6 @@
                 responsive: true,
                 plugins: {
                     legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: 'var(--text-secondary)' },
-                        grid: { color: 'var(--border)' }
-                    },
-                    x: {
-                        ticks: { color: 'var(--text-secondary)' },
-                        grid: { display: false }
-                    }
                 }
             }
         });

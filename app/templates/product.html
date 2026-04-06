@@ -6,12 +6,13 @@
 <div class="product-detail-container">
     <!-- Product Detail -->
     <section class="product-detail">
-        <div class="product-detail-image">
-            {% if product.image %}
+        <div class="product-detail-image product-image">
+            {% if product.image and product.image != 'nan' and product.image != 'None' %}
             <img src="{{ product.image }}" alt="{{ product.name }}"
-                onerror="this.src='https://via.placeholder.com/400x400?text=No+Image'">
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="no-image-placeholder" style="display: none; font-size: 5rem; opacity: 0.2;">🖼️</div>
             {% else %}
-            <img src="https://via.placeholder.com/400x400?text=No+Image" alt="No image">
+            <div class="no-image-placeholder" style="font-size: 5rem; opacity: 0.2;">🖼️</div>
             {% endif %}
         </div>
 
@@ -68,11 +69,12 @@
             {% for product in similar %}
             <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
                 <div class="product-image">
-                    {% if product.image %}
+                    {% if product.image and product.image != 'nan' and product.image != 'None' %}
                     <img src="{{ product.image }}" alt="{{ product.name }}"
-                        onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="no-image-placeholder" style="display: none; font-size: 2.5rem; opacity: 0.3;">🖼️</div>
                     {% else %}
-                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    <div class="no-image-placeholder" style="font-size: 2.5rem; opacity: 0.3;">🖼️</div>
                     {% endif %}
                 </div>
                 <div class="product-info">
@@ -130,11 +132,12 @@
             {% for product in related %}
             <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
                 <div class="product-image">
-                    {% if product.image %}
+                    {% if product.image and product.image != 'nan' and product.image != 'None' %}
                     <img src="{{ product.image }}" alt="{{ product.name }}"
-                        onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="no-image-placeholder" style="display: none; font-size: 2.5rem; opacity: 0.3;">🖼️</div>
                     {% else %}
-                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                    <div class="no-image-placeholder" style="font-size: 2.5rem; opacity: 0.3;">🖼️</div>
                     {% endif %}
                 </div>
                 <div class="product-info">

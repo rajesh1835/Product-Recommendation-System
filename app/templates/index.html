@@ -9,31 +9,31 @@
         <h1>Discover Products You'll Love</h1>
         <p>AI-powered recommendations tailored just for you</p>
         <form class="hero-search" action="{{ url_for('search') }}" method="GET">
-            <input type="text" name="q" placeholder="Search for laptops, headphones, cameras...">
+            <input type="text" name="q" placeholder="Search for laptops, headphones, cameras..." autocomplete="off">
             <button type="submit">Search</button>
         </form>
     </div>
 </section>
 
 <!-- KPI Cards -->
-<section class="kpi-section">
+<section class="kpi-section fade-in">
     <div class="kpi-container">
-        <div class="kpi-card">
+        <div class="kpi-card glass">
             <div class="kpi-icon">📦</div>
             <div class="kpi-value">{{ "{:,}".format(kpi.total_products) }}</div>
             <div class="kpi-label">Total Products</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card glass">
             <div class="kpi-icon">🏷️</div>
             <div class="kpi-value">{{ kpi.total_categories }}</div>
             <div class="kpi-label">Categories</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card glass">
             <div class="kpi-icon">⭐</div>
             <div class="kpi-value">{{ kpi.avg_rating }}</div>
             <div class="kpi-label">Avg Rating</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card glass">
             <div class="kpi-icon">💰</div>
             <div class="kpi-value">₹{{ "{:,.0f}".format(kpi.avg_price|clean_price) }}</div>
             <div class="kpi-label">Avg Price</div>
@@ -42,7 +42,7 @@
 </section>
 
 <!-- Popular Products -->
-<section class="products-section">
+<section class="products-section fade-in">
     <div class="section-header">
         <h2>🔥 Popular Products</h2>
         <a href="{{ url_for('search') }}" class="view-all">View All →</a>
@@ -52,11 +52,12 @@
         {% for product in popular %}
         <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
             <div class="product-image">
-                {% if product.image %}
+                {% if product.image and product.image != 'nan' and product.image != 'None' %}
                 <img src="{{ product.image }}" alt="{{ product.name }}"
-                    onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div class="no-image-placeholder" style="display: none; font-size: 3rem; opacity: 0.3;">🖼️</div>
                 {% else %}
-                <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                <div class="no-image-placeholder" style="font-size: 3rem; opacity: 0.3;">🖼️</div>
                 {% endif %}
             </div>
             <div class="product-info">
@@ -85,7 +86,7 @@
 </section>
 
 <!-- Features Section -->
-<section class="features-section">
+<section class="features-section fade-in">
     <h2>Why Choose Us?</h2>
     <div class="features-grid">
         <div class="feature-card">

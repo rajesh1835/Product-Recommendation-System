@@ -21,16 +21,16 @@ class User(db.Model):
 class Product(db.Model):
     __tablename__ = 'products'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(500), nullable=False)
+    name = db.Column(db.String(500), nullable=False, index=True) # Added index for name
     main_category = db.Column(db.String(100), index=True)
     sub_category = db.Column(db.String(100), index=True)
     image = db.Column(db.String(500))
     link = db.Column(db.String(500))
     ratings = db.Column(db.Float, default=0, index=True)
-    no_of_ratings = db.Column(db.Integer, default=0)
+    no_of_ratings = db.Column(db.Integer, default=0, index=True) # Added index for no_of_ratings
     discount_price = db.Column(db.Float, default=0, index=True)
     actual_price = db.Column(db.Float, default=0)
-    product_id = db.Column(db.String(50), unique=True)
+    product_id = db.Column(db.String(50), unique=True, index=True) # Ensure product_id is indexed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __setattr__(self, name, value):

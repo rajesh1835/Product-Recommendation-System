@@ -10,16 +10,17 @@ import io
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file, make_response
 import pandas as pd
 from fpdf import FPDF
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
 # Add project root to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
+from dotenv import load_dotenv
+
+# Load environment variables from project root
+load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
+
 from config import Config
+from sqlalchemy import text
 from src.components.database import db, Product, User, init_db
 from src.inference.search_recommendation import ProductRecommender
 from src.inference.hybrid_recommender import HybridRecommender
@@ -76,15 +77,28 @@ def get_products_from_db(limit=None):
     return [{'id': p.id, 'name': p.name, 'category': p.category, 'price': p.price, 'rating': p.rating} for p in products]
 
 def search_products_db(query_text, limit=30):
-    """Search products in MySQL database with improved relevance"""
-    results = Product.query.filter(
-        Product.name.ilike(f'%{query_text}%') | 
-        Product.main_category.ilike(f'%{query_text}%') |
-        Product.sub_category.ilike(f'%{query_text}%')
-    ).order_by(
-        # Weighted sorting: prioritize higher star ratings with more reviews
-        (Product.ratings * Product.no_of_ratings).desc()
-    ).limit(limit).all()
+    """Search products in MySQL database with improved relevance and speed using FULLTEXT index"""
+    # Use MySQL fulltext search if query is longer than 3 characters
+    if len(query_text) > 3:
+        # Match against name, main_category, and sub_category using the FULLTEXT index
+        results = db.session.query(Product).filter(
+            text("MATCH(name, main_category, sub_category) AGAINST(:query IN NATURAL LANGUAGE MODE)")
+        ).params(query=query_text).order_by(
+            (Product.ratings * Product.no_of_ratings).desc()
+        ).limit(limit).all()
+        
+        # Fallback to ilike if FULLTEXT didn't find results
+        if not results:
+            results = Product.query.filter(
+                Product.name.ilike(f'%{query_text}%') | 
+                Product.main_category.ilike(f'%{query_text}%')
+            ).order_by((Product.ratings * Product.no_of_ratings).desc()).limit(limit).all()
+    else:
+        # Basic prefix search for short queries
+        results = Product.query.filter(
+            Product.name.ilike(f'{query_text}%')
+        ).order_by((Product.ratings * Product.no_of_ratings).desc()).limit(limit).all()
+        
     return results
 
 # -----------------------------
@@ -227,11 +241,21 @@ def index():
 # -----------------------------
 # ROUTES - DASHBOARD (Improved with Analytics)
 # -----------------------------
+# Cache for dashboard data
+_dashboard_cache = None
+_dashboard_cache_time = None
+
 @app.route('/dashboard')
 def dashboard():
     from src.components.database import PageView, Recommendation
-    from datetime import date, timedelta
+    from datetime import date, timedelta, datetime
     import threading
+    global _dashboard_cache, _dashboard_cache_time
+    
+    # Check if we have valid cache (e.g., 5 minutes old max)
+    now = datetime.now()
+    if _dashboard_cache and _dashboard_cache_time and (now - _dashboard_cache_time).total_seconds() < 300:
+        return _dashboard_cache
     
     # Track page view asynchronously (don't wait for it)
     def track_visit():
@@ -366,7 +390,8 @@ def dashboard():
         'image': p.image
     } for p in best_deals]
     
-    return render_template('dashboard.html', 
+    # Render and cache the response
+    response_html = render_template('dashboard.html', 
                          popular=popular_data, 
                          kpi=kpi,
                          categories=categories_data,
@@ -379,6 +404,36 @@ def dashboard():
                          recommendations_chart_data=recommendations_chart_data,
                          category_chart_data=category_chart_data,
                          rating_dist_data=rating_dist_data)
+    
+    _dashboard_cache = response_html
+    _dashboard_cache_time = now
+    return response_html
+
+# Cache for filters
+_categories_cache = None
+_subcategories_cache = None
+
+def get_cached_filters():
+    """Get categories and subcategories with simple caching"""
+    global _categories_cache, _subcategories_cache
+    
+    if _categories_cache is None or _subcategories_cache is None:
+        try:
+            # Only fetch what we need for the filter sidebar
+            all_categories = db.session.query(db.distinct(Product.main_category)).filter(
+                Product.main_category.isnot(None)
+            ).all()
+            _categories_cache = sorted([cat[0] for cat in all_categories if cat[0]])
+            
+            all_subcategories = db.session.query(db.distinct(Product.sub_category)).filter(
+                Product.sub_category.isnot(None)
+            ).all()
+            _subcategories_cache = sorted([subcat[0] for subcat in all_subcategories if subcat[0]])
+        except Exception as e:
+            print(f"⚠️ Error fetching filters: {e}")
+            return [], []
+            
+    return _categories_cache, _subcategories_cache
 
 # -----------------------------
 # ROUTES - SEARCH WITH FILTERS
@@ -392,115 +447,113 @@ def search():
     max_price = request.args.get('max_price', type=float)
     min_rating = request.args.get('min_rating', type=float)
     
-    with app.app_context():
-        # Get all categories for filter dropdowns
-        all_categories = db.session.query(db.distinct(Product.main_category)).filter(
-            Product.main_category.isnot(None)
-        ).all()
-        all_categories = [cat[0] for cat in all_categories if cat[0]]
-        
-        all_subcategories = db.session.query(db.distinct(Product.sub_category)).filter(
-            Product.sub_category.isnot(None)
-        ).all()
-        all_subcategories = [subcat[0] for subcat in all_subcategories if subcat[0]]
-        
-        # Build query
-        results_query = Product.query
-        
-        if query:
+    # Get cached filter options (much faster)
+    all_categories, all_subcategories = get_cached_filters()
+    
+    # Build query
+    results_query = Product.query
+    
+    # Use FULLTEXT search if query is provided
+    if query:
+        if len(query) > 3:
             results_query = results_query.filter(
-                Product.name.ilike(f'%{query}%') | 
-                Product.main_category.ilike(f'%{query}%') |
-                Product.sub_category.ilike(f'%{query}%')
+                text("MATCH(name, main_category, sub_category) AGAINST(:query IN NATURAL LANGUAGE MODE)")
+            ).params(query=query)
+        else:
+            results_query = results_query.filter(Product.name.ilike(f'%{query}%'))
+    
+    if main_category:
+        results_query = results_query.filter(Product.main_category == main_category)
+    
+    if sub_category:
+        results_query = results_query.filter(Product.sub_category == sub_category)
+    
+    if min_price:
+        results_query = results_query.filter(Product.discount_price >= min_price)
+    
+    if max_price:
+        results_query = results_query.filter(Product.discount_price <= max_price)
+    
+    if min_rating:
+        results_query = results_query.filter(Product.ratings >= min_rating)
+    
+    # Optimized sorting with the new composite index
+    results = results_query.order_by(Product.ratings.desc(), Product.no_of_ratings.desc()).limit(30).all()
+    
+    # Track search activity asynchronously (background thread)
+    from src.components.database import PageView
+    from datetime import date
+    import threading
+    
+    def track_search():
+        with app.app_context():
+            try:
+                today = date.today()
+                page_view = PageView.query.filter_by(page_name='search', date=today).first()
+                if page_view:
+                    page_view.visit_count += 1
+                else:
+                    page_view = PageView(page_name='search', visit_count=1, date=today)
+                db.session.add(page_view)
+                db.session.commit()
+            except:
+                pass
+                
+    threading.Thread(target=track_search, daemon=True).start()
+    
+    # Build related products from top categories
+    related = []
+    if results:
+        top_cats = set([p.main_category for p in results[:5]])
+        for cat in top_cats:
+            related.extend(
+                Product.query.filter(
+                    Product.main_category == cat,
+                    ~Product.product_id.in_([p.product_id for p in results])
+                ).order_by(Product.ratings.desc()).limit(3).all()
             )
-        
-        if main_category:
-            results_query = results_query.filter(Product.main_category == main_category)
-        
-        if sub_category:
-            results_query = results_query.filter(Product.sub_category == sub_category)
-        
-        if min_price:
-            results_query = results_query.filter(Product.discount_price >= min_price)
-        
-        if max_price:
-            results_query = results_query.filter(Product.discount_price <= max_price)
-        
-        if min_rating:
-            results_query = results_query.filter(Product.ratings >= min_rating)
-        
-        # Consistent weighted sorting for search
-        results = results_query.order_by((Product.ratings * Product.no_of_ratings).desc()).limit(50).all()
-        
-        # Track search activity for analytics
-        from src.components.database import PageView
+    
+    results_list = [{
+        'ProductId': p.product_id, 
+        'name': p.name, 
+        'main_category': p.main_category,
+        'sub_category': p.sub_category or '',
+        'price': p.discount_price, 
+        'ratings': p.ratings,
+        'no_of_ratings': p.no_of_ratings,
+        'discount_price': p.discount_price,
+        'actual_price': p.actual_price or 0,
+        'image': p.image
+    } for p in results]
+    
+    related_list = [{
+        'ProductId': p.product_id,
+        'name': p.name, 
+        'ratings': p.ratings,
+        'discount_price': p.discount_price,
+        'image': p.image,
+        'main_category': p.main_category
+    } for p in related[:6]] if isinstance(related, list) and related and hasattr(related[0], 'product_id') else related[:6]
+    
+    # Track recommendations if suggestions were shown
+    if related_list:
+        from src.components.database import Recommendation
         from datetime import date
         today = date.today()
-        page_view = PageView.query.filter_by(page_name='search', date=today).first()
-        if page_view:
-            page_view.visit_count += 1
+        rec = Recommendation.query.filter_by(date=today).first()
+        if rec:
+            rec.recommendation_count += len(related_list)
         else:
-            page_view = PageView(page_name='search', visit_count=1, date=today)
-        db.session.add(page_view)
-        # We don't need a manual commit here if we follow Flask-SQLAlchemy's session lifecycle,
-        # but the project seems to use manual commits.
+            rec = Recommendation(recommendation_count=len(related_list), date=today)
+        db.session.add(rec)
         db.session.commit()
-        
-        # Build related products from top categories
-        related = []
-        if results:
-            top_cats = set([p.main_category for p in results[:5]])
-            for cat in top_cats:
-                related.extend(
-                    Product.query.filter(
-                        Product.main_category == cat,
-                        ~Product.product_id.in_([p.product_id for p in results])
-                    ).order_by(Product.ratings.desc()).limit(3).all()
-                )
-        
-        # Skip similar products per request; only related products shown
-        
-        results_list = [{
-            'ProductId': p.product_id, 
-            'name': p.name, 
-            'main_category': p.main_category,
-            'sub_category': p.sub_category or '',
-            'price': p.discount_price, 
-            'ratings': p.ratings,
-            'no_of_ratings': p.no_of_ratings,
-            'discount_price': p.discount_price,
-            'actual_price': p.actual_price or 0,
-            'image': p.image
-        } for p in results]
-        
-        related_list = [{
-            'ProductId': p.product_id,
-            'name': p.name, 
-            'ratings': p.ratings,
-            'discount_price': p.discount_price,
-            'image': p.image,
-            'main_category': p.main_category
-        } for p in related[:6]] if isinstance(related, list) and related and hasattr(related[0], 'product_id') else related[:6]
-        
-        # Track recommendations if suggestions were shown
-        if related_list:
-            from src.components.database import Recommendation
-            from datetime import date
-            today = date.today()
-            rec = Recommendation.query.filter_by(date=today).first()
-            if rec:
-                rec.recommendation_count += len(related_list)
-            else:
-                rec = Recommendation(recommendation_count=len(related_list), date=today)
-            db.session.add(rec)
-            db.session.commit()
-        
-        return render_template('search.html', 
-                             results=results_list, 
-                             query=query,
-                             all_categories=all_categories,
-                             all_subcategories=all_subcategories,
-                             suggestions=related_list)
+    
+    return render_template('search.html', 
+                         results=results_list, 
+                         query=query,
+                         all_categories=all_categories,
+                         all_subcategories=all_subcategories,
+                         suggestions=related_list)
 
 # -----------------------------
 # ROUTES - PRODUCT DETAIL

@@ -6,7 +6,7 @@
 <div class="search-container">
     <div class="search-layout">
         <!-- Filters Sidebar -->
-        <aside class="filters-sidebar">
+        <aside class="filters-sidebar glass">
             <h3>🔍 Filters</h3>
 
             <form id="filterForm" action="{{ url_for('search') }}" method="GET" class="filter-form">
@@ -45,7 +45,7 @@
         </aside>
 
         <!-- Results Section -->
-        <section class="search-results">
+        <section class="search-results fade-in">
             <div class="results-header">
                 <h2>Search Results {% if query %}<span class="query-highlight">"{{ query }}"</span>{% endif %}</h2>
                 <div class="results-actions">
@@ -65,19 +65,18 @@
             <p class="results-count">Found <strong>{{ results|length }}</strong> products</p>
             {% endif %}
 
-            <!-- Similar Products Section intentionally removed per request -->
-
             <!-- Products Grid -->
             {% if results %}
             <div class="results-grid">
                 {% for product in results %}
                 <a href="{{ url_for('product_detail', product_id=product.ProductId) }}" class="product-card">
                     <div class="product-image">
-                        {% if product.image %}
+                        {% if product.image and product.image != 'nan' and product.image != 'None' %}
                         <img src="{{ product.image }}" alt="{{ product.name }}"
-                            onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="no-image-placeholder" style="display: none; font-size: 3rem; opacity: 0.3;">🖼️</div>
                         {% else %}
-                        <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                        <div class="no-image-placeholder" style="font-size: 3rem; opacity: 0.3;">🖼️</div>
                         {% endif %}
                     </div>
                     <div class="product-info">
@@ -121,7 +120,7 @@
             <!-- Related Products Section (moved below results) -->
             {% if suggestions %}
             <div class="suggestions-section"
-                style="margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem; width: 100%;">
+                style="margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 2rem; width: 100%; background: none; border: none;">
                 <h3
                     style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
                     <span style="font-size: 1.4rem;">🔗</span> Related Products You Might Like
@@ -131,9 +130,15 @@
                     {% for product in suggestions %}
                     <div class="suggestion-card"
                         style="background: var(--bg-card); padding: 1rem; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column;">
-                        <img src="{{ product.image }}" alt="{{ product.name }}"
-                            style="width: 100%; height: 150px; object-fit: contain; border-radius: 8px; margin-bottom: 1rem;"
-                            onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
+                        <div class="product-image" style="height: 150px; margin-bottom: 1rem; border-radius: 8px;">
+                            {% if product.image and product.image != 'nan' and product.image != 'None' %}
+                            <img src="{{ product.image }}" alt="{{ product.name }}"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="no-image-placeholder" style="display: none; font-size: 2rem; opacity: 0.3;">🖼️</div>
+                            {% else %}
+                            <div class="no-image-placeholder" style="font-size: 2rem; opacity: 0.3;">🖼️</div>
+                            {% endif %}
+                        </div>
                         <h4
                             style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-primary); line-height: 1.4;">
                             {{ product.name[:40] }}{% if product.name|length > 40 %}...{% endif %}</h4>
