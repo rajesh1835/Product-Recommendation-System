@@ -849,6 +849,101 @@ def api_stats():
     return jsonify(data)
 
 # -----------------------------
+# ADMIN ROUTES
+# -----------------------------
+@app.route('/admin/load-data')
+def admin_load_data():
+    """Load CSV data into the MySQL products table.
+    
+    Reads data/processed/amazon_products_with_reviews.csv and inserts all
+    rows into the products table. Only runs when the table is empty to
+    prevent duplicate inserts.
+    """
+    try:
+        # Safety check: only load if the table is empty
+        existing_count = Product.query.count()
+        if existing_count > 0:
+            return jsonify({
+                'status': 'skipped',
+                'message': f'Data already loaded ({existing_count} products in database)',
+                'count': existing_count
+            })
+
+        # Resolve CSV path relative to the project root
+        csv_path = os.path.join(PROJECT_ROOT, 'data', 'processed', 'amazon_products_with_reviews.csv')
+
+        if not os.path.exists(csv_path):
+            return jsonify({
+                'status': 'error',
+                'message': f'CSV file not found at {csv_path}'
+            }), 404
+
+        # Read the CSV
+        df = pd.read_csv(csv_path)
+
+        # Normalise column names to lowercase for consistent access
+        df.columns = [c.strip().lower() for c in df.columns]
+
+        # Clean numeric columns — strip currency symbols / commas
+        for col in ['ratings', 'no_of_ratings', 'discount_price', 'actual_price']:
+            if col in df.columns:
+                df[col] = (
+                    df[col]
+                    .astype(str)
+                    .str.replace(r'[^\d.]', '', regex=True)
+                )
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+        # Clamp ratings to [0, 5]
+        if 'ratings' in df.columns:
+            df['ratings'] = df['ratings'].clip(0, 5)
+
+        # Determine the product_id column (may be 'productid' or 'product_id')
+        pid_col = None
+        for candidate in ['productid', 'product_id']:
+            if candidate in df.columns:
+                pid_col = candidate
+                break
+
+        products = []
+        for _, row in df.iterrows():
+            product_id_val = str(row[pid_col]) if pid_col and pd.notna(row.get(pid_col)) else None
+
+            product = Product(
+                name=str(row.get('name', ''))[:500],
+                main_category=str(row.get('main_category', ''))[:100] if pd.notna(row.get('main_category')) else None,
+                sub_category=str(row.get('sub_category', ''))[:100] if pd.notna(row.get('sub_category')) else None,
+                image=str(row.get('image', ''))[:500] if pd.notna(row.get('image')) else None,
+                link=str(row.get('link', ''))[:500] if pd.notna(row.get('link')) else None,
+                ratings=float(row.get('ratings', 0) or 0),
+                no_of_ratings=int(row.get('no_of_ratings', 0) or 0),
+                discount_price=float(row.get('discount_price', 0) or 0),
+                actual_price=float(row.get('actual_price', 0) or 0),
+                product_id=product_id_val,
+            )
+            products.append(product)
+
+        # Bulk insert in batches of 500 to avoid oversized transactions
+        batch_size = 500
+        for i in range(0, len(products), batch_size):
+            db.session.bulk_save_objects(products[i:i + batch_size])
+            db.session.commit()
+
+        total = len(products)
+        return jsonify({
+            'status': 'success',
+            'message': f'Loaded {total} products',
+            'count': total
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+# -----------------------------
 # RUN
 # -----------------------------
 if __name__ == '__main__':
