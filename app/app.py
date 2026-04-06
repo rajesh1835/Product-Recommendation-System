@@ -943,6 +943,201 @@ def admin_load_data():
             'message': str(e)
         }), 500
 
+@app.route('/admin/load-sample-data')
+def admin_load_sample_data():
+    """Generate and insert 500 sample products into the products table.
+
+    Programmatically builds realistic product records across several
+    categories so the app can be tested without the CSV file that is
+    produced by main.py locally.  The endpoint is idempotent: if the
+    table already contains rows it returns early without inserting
+    duplicates.
+    """
+    try:
+        import random
+
+        # Safety check: only load when the table is empty
+        existing_count = Product.query.count()
+        if existing_count > 0:
+            return jsonify({
+                'status': 'skipped',
+                'message': f'Data already loaded ({existing_count} products in database)',
+                'count': existing_count
+            })
+
+        # ------------------------------------------------------------------
+        # Catalogue definition
+        # ------------------------------------------------------------------
+        catalogue = [
+            # (main_category, sub_category, product_names, price_range)
+            ('Electronics', 'Laptops', [
+                'ProBook Laptop 15"', 'UltraSlim Notebook', 'Gaming Laptop X1',
+                'Business Laptop Pro', 'Student Chromebook', 'Creator Laptop 4K',
+                'Rugged Field Laptop', 'Convertible 2-in-1 Laptop', 'Budget Laptop 14"',
+                'Workstation Laptop',
+            ], (30000, 150000)),
+            ('Electronics', 'Smartphones', [
+                'Galaxy Flagship S', 'ProMax Phone 15', 'Budget Android Phone',
+                'Foldable Smartphone', 'Camera Phone Ultra', 'Gaming Phone GT',
+                'Compact Smartphone', 'Rugged Outdoor Phone', '5G Mid-Range Phone',
+                'Selfie Phone Pro',
+            ], (8000, 120000)),
+            ('Electronics', 'Headphones', [
+                'Noise-Cancelling Headphones', 'True Wireless Earbuds', 'Studio Monitor Headphones',
+                'Sports Earphones', 'Over-Ear Bluetooth Headphones', 'Gaming Headset 7.1',
+                'Kids Headphones', 'Open-Back Audiophile Headphones', 'Bone Conduction Headphones',
+                'Wired In-Ear Monitors',
+            ], (500, 30000)),
+            ('Electronics', 'Tablets', [
+                'Pro Tablet 12"', 'Budget Android Tablet', 'Kids Learning Tablet',
+                'Drawing Tablet', 'E-Ink Reader', 'Rugged Tablet', '8" Compact Tablet',
+                'Tablet with Keyboard', 'AMOLED Tablet', 'Business Tablet',
+            ], (5000, 80000)),
+            ('Electronics', 'Cameras', [
+                'Mirrorless Camera Kit', 'DSLR Starter Bundle', 'Action Camera 4K',
+                'Instant Print Camera', 'Vlogging Camera', 'Security Dome Camera',
+                'Drone with Camera', 'Webcam 1080p', 'Film Camera Retro', 'Compact Point & Shoot',
+            ], (2000, 90000)),
+            ('Electronics', 'Smart Home', [
+                'Smart Speaker Mini', 'Smart Bulb Pack', 'Wi-Fi Smart Plug',
+                'Video Doorbell', 'Smart Thermostat', 'Robot Vacuum Cleaner',
+                'Smart Display 10"', 'Home Security Camera', 'Smart Lock', 'Air Purifier Smart',
+            ], (800, 25000)),
+            ('Fashion', 'Men\'s Clothing', [
+                'Classic Polo Shirt', 'Slim Fit Chinos', 'Formal Dress Shirt',
+                'Casual Denim Jacket', 'Linen Summer Shirt', 'Graphic Tee',
+                'Wool Blazer', 'Cargo Shorts', 'Hooded Sweatshirt', 'Turtleneck Sweater',
+            ], (300, 5000)),
+            ('Fashion', 'Women\'s Clothing', [
+                'Floral Maxi Dress', 'High-Waist Jeans', 'Silk Blouse',
+                'Knit Cardigan', 'Wrap Midi Dress', 'Denim Shorts',
+                'Puffer Jacket', 'Yoga Leggings', 'Lace Evening Gown', 'Striped T-Shirt',
+            ], (300, 8000)),
+            ('Fashion', 'Footwear', [
+                'Running Sneakers', 'Leather Oxford Shoes', 'Casual Slip-Ons',
+                'Hiking Boots', 'Strappy Sandals', 'Chelsea Boots',
+                'Flip Flops', 'Ballet Flats', 'High-Top Trainers', 'Loafers',
+            ], (500, 12000)),
+            ('Fashion', 'Accessories', [
+                'Leather Wallet', 'Aviator Sunglasses', 'Stainless Steel Watch',
+                'Canvas Backpack', 'Silk Scarf', 'Leather Belt',
+                'Beanie Hat', 'Tote Bag', 'Smartwatch Band', 'Jewellery Set',
+            ], (200, 15000)),
+            ('Home', 'Kitchen', [
+                'Non-Stick Cookware Set', 'Stainless Steel Knife Set', 'Electric Kettle',
+                'Air Fryer 5L', 'Blender Pro', 'Coffee Maker Drip',
+                'Instant Pot 6-in-1', 'Toaster Oven', 'Juicer Centrifugal', 'Rice Cooker',
+            ], (500, 15000)),
+            ('Home', 'Furniture', [
+                'Ergonomic Office Chair', 'Standing Desk', 'Bookshelf 5-Tier',
+                'Sofa 3-Seater', 'Bed Frame Queen', 'Dining Table Set',
+                'TV Stand', 'Wardrobe 2-Door', 'Coffee Table', 'Shoe Rack',
+            ], (2000, 50000)),
+            ('Home', 'Bedding', [
+                'Cotton Duvet Cover', 'Memory Foam Pillow', 'Weighted Blanket',
+                'Bamboo Bed Sheets', 'Electric Blanket', 'Mattress Topper',
+                'Pillow Protectors', 'Blackout Curtains', 'Throw Blanket', 'Duvet Insert',
+            ], (400, 8000)),
+            ('Home', 'Decor', [
+                'Scented Candle Set', 'Wall Art Print', 'Ceramic Vase',
+                'Photo Frame Set', 'Fairy Lights', 'Artificial Plant',
+                'Decorative Cushion', 'Wall Clock', 'Table Lamp', 'Bookend Set',
+            ], (200, 5000)),
+            ('Books', 'Fiction', [
+                'The Lost Kingdom', 'Midnight in Paris', 'The Last Algorithm',
+                'Echoes of Tomorrow', 'The Silent Forest', 'Crimson Tide Rising',
+                'A World Apart', 'The Forgotten Map', 'Starfall Chronicles', 'Beneath the Surface',
+            ], (150, 800)),
+            ('Books', 'Non-Fiction', [
+                'Atomic Habits', 'Deep Work', 'The Psychology of Money',
+                'Sapiens: A Brief History', 'Thinking Fast and Slow', 'Zero to One',
+                'The Lean Startup', 'Educated: A Memoir', 'Becoming', 'The Power of Now',
+            ], (200, 1000)),
+            ('Books', 'Technology', [
+                'Clean Code', 'The Pragmatic Programmer', 'Design Patterns',
+                'Introduction to Algorithms', 'Python Crash Course', 'Deep Learning',
+                'The Art of Computer Programming', 'Cracking the Coding Interview',
+                'Kubernetes in Action', 'Site Reliability Engineering',
+            ], (300, 2000)),
+            ('Sports', 'Fitness Equipment', [
+                'Adjustable Dumbbell Set', 'Resistance Bands Kit', 'Yoga Mat Premium',
+                'Pull-Up Bar', 'Jump Rope Speed', 'Foam Roller',
+                'Kettlebell 16kg', 'Ab Wheel Roller', 'Push-Up Handles', 'Balance Board',
+            ], (300, 20000)),
+            ('Sports', 'Outdoor', [
+                'Camping Tent 4-Person', 'Sleeping Bag -10°C', 'Trekking Poles',
+                'Hydration Backpack', 'Portable Camp Stove', 'Headlamp 500lm',
+                'Hammock Ultralight', 'Waterproof Jacket', 'Compass & Map Set', 'Carabiner Pack',
+            ], (500, 15000)),
+            ('Beauty', 'Skincare', [
+                'Vitamin C Serum', 'Hyaluronic Acid Moisturiser', 'SPF 50 Sunscreen',
+                'Retinol Night Cream', 'Micellar Cleansing Water', 'Clay Face Mask',
+                'Eye Cream Anti-Ageing', 'Toner Balancing Mist', 'Exfoliating Scrub', 'BB Cream',
+            ], (200, 3000)),
+        ]
+
+        # ------------------------------------------------------------------
+        # Generate 500 products
+        # ------------------------------------------------------------------
+        TARGET = 500
+        products = []
+        counter = 1
+
+        while len(products) < TARGET:
+            for main_cat, sub_cat, names, (price_lo, price_hi) in catalogue:
+                if len(products) >= TARGET:
+                    break
+                for base_name in names:
+                    if len(products) >= TARGET:
+                        break
+
+                    # Vary the name slightly on repeat passes
+                    suffix = f' v{counter // len(catalogue) + 1}' if counter > len(catalogue) * len(names) else ''
+                    name = base_name + suffix
+
+                    actual = round(random.uniform(price_lo, price_hi), 2)
+                    discount_pct = random.uniform(0.05, 0.40)
+                    discount = round(actual * (1 - discount_pct), 2)
+                    rating = round(random.uniform(2.5, 5.0), 1)
+                    num_ratings = random.randint(10, 10000)
+                    product_id = f'PROD_{counter:04d}'
+
+                    products.append(Product(
+                        name=name,
+                        main_category=main_cat,
+                        sub_category=sub_cat,
+                        image='',
+                        link='',
+                        ratings=rating,
+                        no_of_ratings=num_ratings,
+                        discount_price=discount,
+                        actual_price=actual,
+                        product_id=product_id,
+                    ))
+                    counter += 1
+
+        # ------------------------------------------------------------------
+        # Bulk insert in batches of 100
+        # ------------------------------------------------------------------
+        batch_size = 100
+        for i in range(0, len(products), batch_size):
+            db.session.bulk_save_objects(products[i:i + batch_size])
+            db.session.commit()
+
+        total = len(products)
+        return jsonify({
+            'status': 'success',
+            'message': f'Loaded {total} sample products',
+            'count': total
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 # -----------------------------
 # RUN
 # -----------------------------
